@@ -1,24 +1,91 @@
 import { useState, useCallback } from "react";
-
-const SAMPLE_MATCH = {
-  team_home: "Iskra Lubań",
-  team_away: "Turbo Ślimaki",
-  sets_home: 3,
-  sets_away: 0,
-  set_scores: [
-    { home: 25, away: 22 },
-    { home: 25, away: 15 },
-    { home: 25, away: 10 },
-  ],
-  scores: "25:22 | 25:15 | 25:10",
-  kolejka: "Ćwierćfinały",
-  color_home: "#d4ba0f",
-  color_away: "#fc77c2",
-  color_liga: "#004aad",
-};
-
+ 
+// ─── ZMIEŃ NA SWÓJ URL RAILWAY ───────────────────────────────────────────────
+const N8N_WEBHOOK_URL = "https://TWOJ-N8N.railway.app/webhook/photo-editor";
+ 
+// ─── Odczyt danych meczu z URL params ────────────────────────────────────────
+function getMatchFromURL() {
+  const p = new URLSearchParams(window.location.search);
+ 
+  if (!p.get("match_id")) {
+    // Tryb deweloperski — brak URL params
+    return {
+      match_id: "DEV",
+      team_home: "Iskra Lubań",
+      team_away: "Turbo Ślimaki",
+      sets_home: 3,
+      sets_away: 0,
+      set_scores: [
+        { home: 25, away: 22 },
+        { home: 25, away: 15 },
+        { home: 25, away: 10 },
+      ],
+      kolejka: "Ćwierćfinały",
+      color_home: "#d4ba0f",
+      color_away: "#fc77c2",
+      color_liga: "#004aad",
+    };
+  }
+ 
+  // "3:0" → sets_home=3, sets_away=0
+  const wynik = p.get("wynik") || "0:0";
+  const [sh, sa] = wynik.split(":").map(Number);
+ 
+  // "25:22,25:15,25:10" → [{home:25,away:22}, ...]
+  const setyRaw = p.get("sety") || "";
+  const set_scores = setyRaw
+    ? setyRaw.split(",").map((s) => {
+        const [h, a] = s.split(":").map(Number);
+        return { home: h || 0, away: a || 0 };
+      })
+    : [];
+ 
+  return {
+    match_id:   p.get("match_id"),
+    team_home:  p.get("team_home")   || "Drużyna A",
+    team_away:  p.get("team_away")   || "Drużyna B",
+    sets_home:  sh || 0,
+    sets_away:  sa || 0,
+    set_scores,
+    kolejka:    p.get("kolejka")     || "",
+    color_home: p.get("color_home")  || "#1a56db",
+    color_away: p.get("color_away")  || "#dc2626",
+    color_liga: p.get("color_liga")  || "#004aad",
+  };
+}
+ 
+// ─── Przelicz pozycję px (podgląd) → % (HCTI object-position) ────────────────
+function posToPercent(pos, imgDisplayW, imgDisplayH, containerW, containerH) {
+  const cx = containerW / 2 - pos.x;
+  const cy = containerH / 2 - pos.y;
+  const px = Math.max(0, Math.min(100, (cx / imgDisplayW) * 100));
+  const py = Math.max(0, Math.min(100, (cy / imgDisplayH) * 100));
+  return `${Math.round(px)}% ${Math.round(py)}%`;
+}
+ 
+function calcImgDisplay(natW, natH, zoom, pw, ph) {
+  if (!natW || !natH) return { w: pw, h: ph };
+  const imgRatio = natW / natH;
+  const containerRatio = pw / ph;
+  let w, h;
+  if (imgRatio > containerRatio) {
+    h = ph * zoom; w = h * imgRatio;
+  } else {
+    w = pw * zoom; h = w / imgRatio;
+  }
+  return { w, h };
+}
+ 
+function buildPhotoPosition(natW, natH, zoom, pos, targetW, targetH, previewW) {
+  const s = previewW / targetW;
+  const pw = targetW * s;
+  const ph = targetH * s;
+  const { w: imgW, h: imgH } = calcImgDisplay(natW, natH, zoom, pw, ph);
+  return posToPercent(pos, imgW, imgH, pw, ph);
+}
+ 
 // ========== PHOTO OVERLAYS ==========
-
+ 
 function PhotoOverlayPost({ s, m }) {
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-end z-10" style={{ pointerEvents: "none", paddingBottom: 40 * s }}>
@@ -49,7 +116,7 @@ function PhotoOverlayPost({ s, m }) {
     </div>
   );
 }
-
+ 
 function PhotoOverlayStory({ s, m }) {
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-end z-10" style={{ pointerEvents: "none", paddingBottom: 80 * s }}>
@@ -80,9 +147,9 @@ function PhotoOverlayStory({ s, m }) {
     </div>
   );
 }
-
+ 
 // ========== NO-PHOTO OVERLAYS ==========
-
+ 
 function NoPhotoPost({ s, m }) {
   return (
     <div className="absolute inset-0" style={{ background: `linear-gradient(180deg, ${m.color_liga} 0%, #001533 100%)` }}>
@@ -100,44 +167,38 @@ function NoPhotoPost({ s, m }) {
     </div>
   );
 }
-
+ 
 function NoPhotoStory({ s, m }) {
   return (
     <div className="absolute inset-0" style={{ background: `linear-gradient(180deg, ${m.color_liga} 0%, #001533 40%, #001533 100%)` }}>
       <Accents s={s} m={m} w={10} />
       <div className="absolute inset-0 flex flex-col items-center justify-evenly z-10" style={{ pointerEvents: "none", paddingTop: 20 * s, paddingBottom: 20 * s }}>
-        {/* Liga + kolejka */}
         <div className="flex flex-col items-center" style={{ gap: 12 * s }}>
           <LigaLogo s={s} m={m} size={120} light />
           <KolejkaBadge s={s} m={m} fontSize={28} light />
         </div>
-        {/* Home team */}
         <TeamCircle s={s} m={m} team="home" size={200} fontSize={30} light />
-        {/* Home scores row */}
         <div className="flex justify-center" style={{ gap: 20 * s }}>
           {m.set_scores.map((sc, i) => {
             const won = sc.home > sc.away;
             return <span key={i} style={{ fontSize: 48 * s, color: won ? m.color_home : m.color_home + '66', fontWeight: won ? 800 : 400, minWidth: 60 * s, textAlign: "center", display: "inline-block" }}>{sc.home}</span>;
           })}
         </div>
-        {/* Main score */}
         <span style={{ fontSize: 180 * s, fontWeight: 900, color: "#fff", lineHeight: 1, letterSpacing: 8 * s }}>{m.sets_home} : {m.sets_away}</span>
-        {/* Away scores row */}
         <div className="flex justify-center" style={{ gap: 20 * s }}>
           {m.set_scores.map((sc, i) => {
             const won = sc.away > sc.home;
             return <span key={i} style={{ fontSize: 48 * s, color: won ? m.color_away : m.color_away + '66', fontWeight: won ? 800 : 400, minWidth: 60 * s, textAlign: "center", display: "inline-block" }}>{sc.away}</span>;
           })}
         </div>
-        {/* Away team */}
         <TeamCircle s={s} m={m} team="away" size={200} fontSize={30} light />
       </div>
     </div>
   );
 }
-
+ 
 // ========== SHARED COMPONENTS ==========
-
+ 
 function SetScoresColored({ s, m, fontSize }) {
   return (
     <div className="flex items-center" style={{ gap: 4 * s }}>
@@ -155,7 +216,7 @@ function SetScoresColored({ s, m, fontSize }) {
     </div>
   );
 }
-
+ 
 function SetTable({ s, m }) {
   return (
     <div style={{ width: 500 * s, marginTop: 20 * s }}>
@@ -185,7 +246,7 @@ function SetTable({ s, m }) {
     </div>
   );
 }
-
+ 
 function LigaLogo({ s, m, size, light }) {
   const bg = light ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.6)";
   const color = light ? m.color_liga : "#fff";
@@ -195,7 +256,7 @@ function LigaLogo({ s, m, size, light }) {
     </div>
   );
 }
-
+ 
 function KolejkaBadge({ s, m, fontSize, light }) {
   const bg = light ? "rgba(0,74,173,0.5)" : "rgba(0,0,0,0.5)";
   return (
@@ -204,7 +265,7 @@ function KolejkaBadge({ s, m, fontSize, light }) {
     </div>
   );
 }
-
+ 
 function TeamCircle({ s, m, team, size, fontSize, light }) {
   const isHome = team === "home";
   const color = isHome ? m.color_home : m.color_away;
@@ -220,7 +281,7 @@ function TeamCircle({ s, m, team, size, fontSize, light }) {
     </div>
   );
 }
-
+ 
 function Accents({ s, m, w }) {
   return (
     <>
@@ -231,18 +292,18 @@ function Accents({ s, m, w }) {
     </>
   );
 }
-
+ 
 // ========== PREVIEW PANEL ==========
-
+ 
 function PreviewPanel({ label, targetW, targetH, image, imgNatW, imgNatH, zoom, setZoom, pos, setPos, onUpload, onRemove, m, maxPreviewW }) {
   const [dragging, setDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-
+ 
   const s = maxPreviewW / targetW;
   const pw = targetW * s;
   const ph = targetH * s;
   const isStory = targetH > targetW;
-
+ 
   let imgDisplayW = pw;
   let imgDisplayH = ph;
   if (image && imgNatW > 0 && imgNatH > 0) {
@@ -256,7 +317,7 @@ function PreviewPanel({ label, targetW, targetH, image, imgNatW, imgNatH, zoom, 
       imgDisplayH = imgDisplayW / imgRatio;
     }
   }
-
+ 
   const onDown = (cx, cy) => {
     if (!image) return;
     setDragging(true);
@@ -267,11 +328,11 @@ function PreviewPanel({ label, targetW, targetH, image, imgNatW, imgNatH, zoom, 
     setPos({ x: cx - dragStart.x, y: cy - dragStart.y });
   };
   const onUp = () => setDragging(false);
-
+ 
   const grad = isStory
     ? "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 15%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.85) 75%, rgba(0,0,0,0.97) 100%)"
     : "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.1) 25%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.92) 80%, rgba(0,0,0,0.97) 100%)";
-
+ 
   return (
     <div className="flex flex-col items-center gap-1">
       <span style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-primary, #333)" }}>{label}</span>
@@ -317,22 +378,27 @@ function PreviewPanel({ label, targetW, targetH, image, imgNatW, imgNatH, zoom, 
     </div>
   );
 }
-
+ 
 // ========== MAIN ==========
-
+ 
 export default function PhotoEditor() {
-  const [postImage, setPostImage] = useState(null);
-  const [postNatW, setPostNatW] = useState(0);
-  const [postNatH, setPostNatH] = useState(0);
-  const [postZoom, setPostZoom] = useState(1.0);
-  const [postPos, setPostPos] = useState({ x: 0, y: 0 });
-
+  const m = getMatchFromURL();
+  const isDev = m.match_id === "DEV";
+ 
+  const [postImage,  setPostImage]  = useState(null);
+  const [postNatW,   setPostNatW]   = useState(0);
+  const [postNatH,   setPostNatH]   = useState(0);
+  const [postZoom,   setPostZoom]   = useState(1.0);
+  const [postPos,    setPostPos]    = useState({ x: 0, y: 0 });
+ 
   const [storyImage, setStoryImage] = useState(null);
-  const [storyNatW, setStoryNatW] = useState(0);
-  const [storyNatH, setStoryNatH] = useState(0);
-  const [storyZoom, setStoryZoom] = useState(1.0);
-  const [storyPos, setStoryPos] = useState({ x: 0, y: 0 });
-
+  const [storyNatW,  setStoryNatW]  = useState(0);
+  const [storyNatH,  setStoryNatH]  = useState(0);
+  const [storyZoom,  setStoryZoom]  = useState(1.0);
+  const [storyPos,   setStoryPos]   = useState({ x: 0, y: 0 });
+ 
+  const [status, setStatus] = useState(null); // null | "sending" | "ok" | "error"
+ 
   const loadImage = useCallback((callback) => (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -345,39 +411,110 @@ export default function PhotoEditor() {
     };
     reader.readAsDataURL(file);
   }, []);
-
-  const m = SAMPLE_MATCH;
-
-  const exportSettings = () => {
-    const data = {
-      post: { has_photo: !!postImage, x: Math.round(postPos.x), y: Math.round(postPos.y), zoom: Math.round(postZoom * 100) },
-      story: { has_photo: !!storyImage, x: Math.round(storyPos.x), y: Math.round(storyPos.y), zoom: Math.round(storyZoom * 100) },
+ 
+  const generateGraphics = async () => {
+    if (!postImage && !storyImage) {
+      alert("Wgraj przynajmniej jedno zdjęcie (post lub story).");
+      return;
+    }
+    if (isDev) {
+      alert("Tryb deweloperski — otwórz edytor przez link z n8n.");
+      return;
+    }
+ 
+    setStatus("sending");
+ 
+    const payload = {
+      match_id: m.match_id,
+      post: postImage ? {
+        photo_base64:   postImage,
+        photo_position: buildPhotoPosition(postNatW, postNatH, postZoom, postPos, 1080, 1080, 340),
+        photo_zoom:     `${Math.round(postZoom * 100)}%`,
+      } : null,
+      story: storyImage ? {
+        photo_base64:   storyImage,
+        photo_position: buildPhotoPosition(storyNatW, storyNatH, storyZoom, storyPos, 1080, 1920, 190),
+        photo_zoom:     `${Math.round(storyZoom * 100)}%`,
+      } : null,
     };
-    navigator.clipboard?.writeText(JSON.stringify(data));
-    alert("Skopiowano ustawienia!");
+ 
+    try {
+      const res = await fetch(N8N_WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setStatus("ok");
+    } catch (err) {
+      console.error(err);
+      setStatus("error");
+    }
   };
-
+ 
   return (
     <div className="flex flex-col items-center gap-3 p-3 max-w-5xl mx-auto">
       <div className="text-center">
-        <h2 style={{ fontSize: 16, fontWeight: 500, color: "var(--color-text-primary, #222)", margin: 0 }}>Edytor zdjęcia meczu</h2>
-        <p style={{ fontSize: 11, color: "var(--color-text-secondary, #888)", marginTop: 4 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 500, color: "var(--color-text-primary, #222)", margin: 0 }}>
+          Edytor zdjęcia meczu
+        </h2>
+        <p style={{ fontSize: 11, color: isDev ? "#f59e0b" : "var(--color-text-secondary, #888)", marginTop: 4 }}>
+          {isDev
+            ? "⚠️ Tryb deweloperski — brak parametrów w URL"
+            : `${m.team_home} vs ${m.team_away}  ·  ${m.sets_home}:${m.sets_away}  ·  ${m.kolejka}  ·  mecz #${m.match_id}`}
+        </p>
+        <p style={{ fontSize: 10, color: "#aaa", marginTop: 2 }}>
           Każdy format ma osobne zdjęcie, zoom i pozycję. Bez foto = grafika klasyczna.
         </p>
       </div>
+ 
       <div className="flex gap-6 flex-wrap justify-center items-start">
-        <PreviewPanel label="Post 1080×1080" targetW={1080} targetH={1080} image={postImage} imgNatW={postNatW} imgNatH={postNatH} zoom={postZoom} setZoom={setPostZoom} pos={postPos} setPos={setPostPos}
+        <PreviewPanel
+          label="Post 1080×1080" targetW={1080} targetH={1080}
+          image={postImage} imgNatW={postNatW} imgNatH={postNatH}
+          zoom={postZoom} setZoom={setPostZoom} pos={postPos} setPos={setPostPos}
           onUpload={loadImage((src, w, h) => { setPostImage(src); setPostNatW(w); setPostNatH(h); setPostPos({ x: 0, y: 0 }); setPostZoom(1.0); })}
           onRemove={() => { setPostImage(null); setPostPos({ x: 0, y: 0 }); setPostZoom(1.0); }}
-          m={m} maxPreviewW={340} />
-        <PreviewPanel label="Story 1080×1920" targetW={1080} targetH={1920} image={storyImage} imgNatW={storyNatW} imgNatH={storyNatH} zoom={storyZoom} setZoom={setStoryZoom} pos={storyPos} setPos={setStoryPos}
+          m={m} maxPreviewW={340}
+        />
+        <PreviewPanel
+          label="Story 1080×1920" targetW={1080} targetH={1920}
+          image={storyImage} imgNatW={storyNatW} imgNatH={storyNatH}
+          zoom={storyZoom} setZoom={setStoryZoom} pos={storyPos} setPos={setStoryPos}
           onUpload={loadImage((src, w, h) => { setStoryImage(src); setStoryNatW(w); setStoryNatH(h); setStoryPos({ x: 0, y: 0 }); setStoryZoom(1.0); })}
           onRemove={() => { setStoryImage(null); setStoryPos({ x: 0, y: 0 }); setStoryZoom(1.0); }}
-          m={m} maxPreviewW={190} />
+          m={m} maxPreviewW={190}
+        />
       </div>
-      <button onClick={exportSettings} className="px-5 py-2 rounded-lg text-sm font-medium text-white" style={{ background: "#16a34a", border: "none", cursor: "pointer", marginTop: 8 }}>
-        Kopiuj ustawienia
+ 
+      <button
+        onClick={generateGraphics}
+        disabled={status === "sending"}
+        className="px-6 py-3 rounded-lg text-sm font-bold text-white"
+        style={{
+          marginTop: 8,
+          minWidth: 200,
+          border: "none",
+          cursor: status === "sending" ? "not-allowed" : "pointer",
+          background:
+            status === "sending" ? "#6b7280" :
+            status === "ok"      ? "#059669" :
+            status === "error"   ? "#dc2626" :
+                                   "#2563eb",
+        }}
+      >
+        {status === "sending" ? "⏳ Wysyłanie…"
+         : status === "ok"    ? "✅ Wysłano! Grafiki za chwilę w arkuszu."
+         : status === "error" ? "❌ Błąd — spróbuj ponownie"
+         : "🚀 Generuj grafiki z tym zdjęciem"}
       </button>
+ 
+      {status === "error" && (
+        <p style={{ fontSize: 11, color: "#dc2626", textAlign: "center" }}>
+          Sprawdź czy workflow w n8n jest aktywny (Production).
+        </p>
+      )}
     </div>
   );
 }
+ 
