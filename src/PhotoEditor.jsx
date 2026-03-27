@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
  
 // ─── ZMIEŃ NA SWÓJ URL RAILWAY ───────────────────────────────────────────────
-const N8N_WEBHOOK_URL = "https://primary-production-9c937.up.railway.app/webhook-test/photo-editor";
+const N8N_WEBHOOK_URL = "https://primary-production-9c937.up.railway.app/webhook/photo-editor";
  
 // ─── Odczyt danych meczu z URL params ────────────────────────────────────────
 function getMatchFromURL() {
