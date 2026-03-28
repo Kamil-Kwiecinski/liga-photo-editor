@@ -1,14 +1,12 @@
-import { useState, useCallback } from "react";
- 
+import { useState, useCallback, useRef } from "react";
+
 // ─── ZMIEŃ NA SWÓJ URL RAILWAY ───────────────────────────────────────────────
 const N8N_WEBHOOK_URL = "https://primary-production-9c937.up.railway.app/webhook/photo-editor";
- 
+
 // ─── Odczyt danych meczu z URL params ────────────────────────────────────────
 function getMatchFromURL() {
   const p = new URLSearchParams(window.location.search);
- 
   if (!p.get("match_id")) {
-    // Tryb deweloperski — brak URL params
     return {
       match_id: "DEV",
       team_home: "Iskra Lubań",
@@ -26,12 +24,8 @@ function getMatchFromURL() {
       color_liga: "#004aad",
     };
   }
- 
-  // "3:0" → sets_home=3, sets_away=0
   const wynik = p.get("wynik") || "0:0";
   const [sh, sa] = wynik.split(":").map(Number);
- 
-  // "25:22,25:15,25:10" → [{home:25,away:22}, ...]
   const setyRaw = p.get("sety") || "";
   const set_scores = setyRaw
     ? setyRaw.split(",").map((s) => {
@@ -39,53 +33,22 @@ function getMatchFromURL() {
         return { home: h || 0, away: a || 0 };
       })
     : [];
- 
   return {
     match_id:   p.get("match_id"),
-    team_home:  p.get("team_home")   || "Drużyna A",
-    team_away:  p.get("team_away")   || "Drużyna B",
+    team_home:  p.get("team_home")  || "Drużyna A",
+    team_away:  p.get("team_away")  || "Drużyna B",
     sets_home:  sh || 0,
     sets_away:  sa || 0,
     set_scores,
-    kolejka:    p.get("kolejka")     || "",
-    color_home: p.get("color_home")  || "#1a56db",
-    color_away: p.get("color_away")  || "#dc2626",
-    color_liga: p.get("color_liga")  || "#004aad",
+    kolejka:    p.get("kolejka")    || "",
+    color_home: p.get("color_home") || "#1a56db",
+    color_away: p.get("color_away") || "#dc2626",
+    color_liga: p.get("color_liga") || "#004aad",
   };
 }
- 
-// ─── Przelicz pozycję px (podgląd) → % (HCTI object-position) ────────────────
-function posToPercent(pos, imgDisplayW, imgDisplayH, containerW, containerH) {
-  const cx = containerW / 2 - pos.x;
-  const cy = containerH / 2 - pos.y;
-  const px = Math.max(0, Math.min(100, (cx / imgDisplayW) * 100));
-  const py = Math.max(0, Math.min(100, (cy / imgDisplayH) * 100));
-  return `${Math.round(px)}% ${Math.round(py)}%`;
-}
- 
-function calcImgDisplay(natW, natH, zoom, pw, ph) {
-  if (!natW || !natH) return { w: pw, h: ph };
-  const imgRatio = natW / natH;
-  const containerRatio = pw / ph;
-  let w, h;
-  if (imgRatio > containerRatio) {
-    h = ph * zoom; w = h * imgRatio;
-  } else {
-    w = pw * zoom; h = w / imgRatio;
-  }
-  return { w, h };
-}
- 
-function buildPhotoPosition(natW, natH, zoom, pos, targetW, targetH, previewW) {
-  const s = previewW / targetW;
-  const pw = targetW * s;
-  const ph = targetH * s;
-  const { w: imgW, h: imgH } = calcImgDisplay(natW, natH, zoom, pw, ph);
-  return posToPercent(pos, imgW, imgH, pw, ph);
-}
- 
-// ========== PHOTO OVERLAYS ==========
- 
+
+// ========== OVERLAY COMPONENTS (bez zmian) ==================================
+
 function PhotoOverlayPost({ s, m }) {
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-end z-10" style={{ pointerEvents: "none", paddingBottom: 40 * s }}>
@@ -116,7 +79,7 @@ function PhotoOverlayPost({ s, m }) {
     </div>
   );
 }
- 
+
 function PhotoOverlayStory({ s, m }) {
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-end z-10" style={{ pointerEvents: "none", paddingBottom: 80 * s }}>
@@ -147,9 +110,7 @@ function PhotoOverlayStory({ s, m }) {
     </div>
   );
 }
- 
-// ========== NO-PHOTO OVERLAYS ==========
- 
+
 function NoPhotoPost({ s, m }) {
   return (
     <div className="absolute inset-0" style={{ background: `linear-gradient(180deg, ${m.color_liga} 0%, #001533 100%)` }}>
@@ -167,7 +128,7 @@ function NoPhotoPost({ s, m }) {
     </div>
   );
 }
- 
+
 function NoPhotoStory({ s, m }) {
   return (
     <div className="absolute inset-0" style={{ background: `linear-gradient(180deg, ${m.color_liga} 0%, #001533 40%, #001533 100%)` }}>
@@ -196,16 +157,14 @@ function NoPhotoStory({ s, m }) {
     </div>
   );
 }
- 
-// ========== SHARED COMPONENTS ==========
- 
+
 function SetScoresColored({ s, m, fontSize }) {
   return (
     <div className="flex items-center" style={{ gap: 4 * s }}>
       {m.set_scores.map((sc, i) => {
         const homeWon = sc.home > sc.away;
         return (
-          <div key={i} className="flex items-center" style={{ gap: 0 }}>
+          <div key={i} className="flex items-center">
             {i > 0 && <span style={{ color: "rgba(255,255,255,0.3)", margin: `0 ${6 * s}px`, fontSize: fontSize * s }}>|</span>}
             <span style={{ color: homeWon ? m.color_home : m.color_home + '66', fontWeight: homeWon ? 800 : 400, fontSize: fontSize * s }}>{sc.home}</span>
             <span style={{ color: "rgba(255,255,255,0.4)", fontSize: fontSize * s }}>:</span>
@@ -216,7 +175,7 @@ function SetScoresColored({ s, m, fontSize }) {
     </div>
   );
 }
- 
+
 function SetTable({ s, m }) {
   return (
     <div style={{ width: 500 * s, marginTop: 20 * s }}>
@@ -246,7 +205,7 @@ function SetTable({ s, m }) {
     </div>
   );
 }
- 
+
 function LigaLogo({ s, m, size, light }) {
   const bg = light ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.6)";
   const color = light ? m.color_liga : "#fff";
@@ -256,7 +215,7 @@ function LigaLogo({ s, m, size, light }) {
     </div>
   );
 }
- 
+
 function KolejkaBadge({ s, m, fontSize, light }) {
   const bg = light ? "rgba(0,74,173,0.5)" : "rgba(0,0,0,0.5)";
   return (
@@ -265,7 +224,7 @@ function KolejkaBadge({ s, m, fontSize, light }) {
     </div>
   );
 }
- 
+
 function TeamCircle({ s, m, team, size, fontSize, light }) {
   const isHome = team === "home";
   const color = isHome ? m.color_home : m.color_away;
@@ -281,7 +240,7 @@ function TeamCircle({ s, m, team, size, fontSize, light }) {
     </div>
   );
 }
- 
+
 function Accents({ s, m, w }) {
   return (
     <>
@@ -292,47 +251,62 @@ function Accents({ s, m, w }) {
     </>
   );
 }
- 
-// ========== PREVIEW PANEL ==========
- 
-function PreviewPanel({ label, targetW, targetH, image, imgNatW, imgNatH, zoom, setZoom, pos, setPos, onUpload, onRemove, m, maxPreviewW }) {
-  const [dragging, setDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
- 
-  const s = maxPreviewW / targetW;
+
+// ========== PREVIEW PANEL — NOWA WERSJA z background-image ==================
+// Kluczowa zmiana: zamiast <img left/top> używamy background-image + background-position
+// Dzięki temu to co widzisz w podglądzie = dokładnie to co generuje Puppeteer/HCTI
+// bo HTML generowany do screenshota też używa object-fit:cover + object-position
+
+function PreviewPanel({ label, targetW, targetH, image, zoom, setZoom, bgPos, setBgPos, onUpload, onRemove, m, maxPreviewW }) {
+  const containerRef = useRef(null);
+  const [dragging, setDragging]   = useState(false);
+  const [dragStart, setDragStart] = useState(null);
+
+  const s  = maxPreviewW / targetW;
   const pw = targetW * s;
   const ph = targetH * s;
   const isStory = targetH > targetW;
- 
-  let imgDisplayW = pw;
-  let imgDisplayH = ph;
-  if (image && imgNatW > 0 && imgNatH > 0) {
-    const imgRatio = imgNatW / imgNatH;
-    const containerRatio = pw / ph;
-    if (imgRatio > containerRatio) {
-      imgDisplayH = ph * zoom;
-      imgDisplayW = imgDisplayH * imgRatio;
-    } else {
-      imgDisplayW = pw * zoom;
-      imgDisplayH = imgDisplayW / imgRatio;
-    }
-  }
- 
-  const onDown = (cx, cy) => {
-    if (!image) return;
-    setDragging(true);
-    setDragStart({ x: cx - pos.x, y: cy - pos.y });
-  };
-  const onMove = (cx, cy) => {
-    if (!dragging) return;
-    setPos({ x: cx - dragStart.x, y: cy - dragStart.y });
-  };
-  const onUp = () => setDragging(false);
- 
+
+  // background-size: zoom% oznacza że 100% = cover (wypełnia kontener)
+  // Używamy tego samego w HTML dla Puppeteer
+  const bgStyle = image ? {
+    backgroundImage:    `url(${image})`,
+    backgroundSize:     `${zoom}%`,
+    backgroundPosition: bgPos,
+    backgroundRepeat:   "no-repeat",
+    cursor:             dragging ? "grabbing" : "grab",
+  } : {};
+
   const grad = isStory
     ? "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 15%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.85) 75%, rgba(0,0,0,0.97) 100%)"
     : "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.1) 25%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.92) 80%, rgba(0,0,0,0.97) 100%)";
- 
+
+  // Drag — przesuwanie pozycji tła
+  const onDown = (cx, cy) => {
+    if (!image) return;
+    setDragging(true);
+    // Parsuj aktualne % z bgPos np. "43% 67%"
+    const parts = bgPos.split(" ");
+    setDragStart({
+      cx, cy,
+      px: parseFloat(parts[0]),
+      py: parseFloat(parts[1]),
+    });
+  };
+
+  const onMove = (cx, cy) => {
+    if (!dragging || !dragStart) return;
+    const dx = cx - dragStart.cx;
+    const dy = cy - dragStart.cy;
+    // Sensitivity: im większy zoom tym wolniejszy ruch
+    const sens = 100 / zoom * 15;
+    const newX = Math.max(0, Math.min(100, dragStart.px - dx / sens));
+    const newY = Math.max(0, Math.min(100, dragStart.py - dy / sens));
+    setBgPos(`${newX.toFixed(1)}% ${newY.toFixed(1)}%`);
+  };
+
+  const onUp = () => { setDragging(false); setDragStart(null); };
+
   return (
     <div className="flex flex-col items-center gap-1">
       <span style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-primary, #333)" }}>{label}</span>
@@ -348,13 +322,19 @@ function PreviewPanel({ label, targetW, targetH, image, imgNatW, imgNatH, zoom, 
       {image && (
         <div className="flex items-center gap-2" style={{ width: pw, marginBottom: 4 }}>
           <span style={{ fontSize: 11, color: "#888" }}>Zoom</span>
-          <input type="range" min="1" max="3" step="0.05" value={zoom} onChange={(e) => setZoom(parseFloat(e.target.value))} style={{ flex: 1 }} />
-          <span style={{ fontSize: 11, color: "#666", width: 36, textAlign: "right" }}>{Math.round(zoom * 100)}%</span>
+          <input
+            type="range" min="100" max="300" step="1"
+            value={zoom}
+            onChange={(e) => setZoom(Number(e.target.value))}
+            style={{ flex: 1 }}
+          />
+          <span style={{ fontSize: 11, color: "#666", width: 36, textAlign: "right" }}>{zoom}%</span>
         </div>
       )}
       <div
-        style={{ width: pw, height: ph }}
-        className={`relative overflow-hidden rounded-lg select-none ${image ? "cursor-grab active:cursor-grabbing" : ""}`}
+        ref={containerRef}
+        style={{ width: pw, height: ph, ...bgStyle }}
+        className={`relative overflow-hidden rounded-lg select-none bg-gray-800`}
         onMouseDown={(e) => { e.preventDefault(); onDown(e.clientX, e.clientY); }}
         onMouseMove={(e) => onMove(e.clientX, e.clientY)}
         onMouseUp={onUp}
@@ -365,8 +345,6 @@ function PreviewPanel({ label, targetW, targetH, image, imgNatW, imgNatH, zoom, 
       >
         {image ? (
           <>
-            <div className="absolute inset-0" style={{ background: "#111" }} />
-            <img src={image} alt="" draggable={false} style={{ position: "absolute", width: imgDisplayW, height: imgDisplayH, maxWidth: "none", maxHeight: "none", left: pos.x, top: pos.y, pointerEvents: "none" }} />
             <div className="absolute inset-0" style={{ background: grad, pointerEvents: "none" }} />
             <Accents s={s} m={m} w={8} />
             {isStory ? <PhotoOverlayStory s={s} m={m} /> : <PhotoOverlayPost s={s} m={m} />}
@@ -375,69 +353,66 @@ function PreviewPanel({ label, targetW, targetH, image, imgNatW, imgNatH, zoom, 
           isStory ? <NoPhotoStory s={s} m={m} /> : <NoPhotoPost s={s} m={m} />
         )}
       </div>
+      {image && (
+        <p style={{ fontSize: 10, color: "#999", marginTop: 2 }}>Przeciągnij żeby zmienić kadr</p>
+      )}
     </div>
   );
 }
- 
-// ========== MAIN ==========
- 
+
+// ========== MAIN =============================================================
+
 export default function PhotoEditor() {
-  const m = getMatchFromURL();
+  const m    = getMatchFromURL();
   const isDev = m.match_id === "DEV";
- 
+
+  // Post
   const [postImage,  setPostImage]  = useState(null);
-  const [postNatW,   setPostNatW]   = useState(0);
-  const [postNatH,   setPostNatH]   = useState(0);
-  const [postZoom,   setPostZoom]   = useState(1.0);
-  const [postPos,    setPostPos]    = useState({ x: 0, y: 0 });
- 
+  const [postZoom,   setPostZoom]   = useState(150);   // % — 100=fit, 150=lekko większy
+  const [postBgPos,  setPostBgPos]  = useState("50% 50%");
+
+  // Story
   const [storyImage, setStoryImage] = useState(null);
-  const [storyNatW,  setStoryNatW]  = useState(0);
-  const [storyNatH,  setStoryNatH]  = useState(0);
-  const [storyZoom,  setStoryZoom]  = useState(1.0);
-  const [storyPos,   setStoryPos]   = useState({ x: 0, y: 0 });
- 
-  const [status, setStatus] = useState(null); // null | "sending" | "ok" | "error"
- 
+  const [storyZoom,  setStoryZoom]  = useState(150);
+  const [storyBgPos, setStoryBgPos] = useState("50% 50%");
+
+  const [status, setStatus] = useState(null);
+
   const loadImage = useCallback((callback) => (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => {
-      const src = ev.target.result;
-      const img = new Image();
-      img.onload = () => callback(src, img.naturalWidth, img.naturalHeight);
-      img.src = src;
-    };
+    reader.onload = (ev) => callback(ev.target.result);
     reader.readAsDataURL(file);
   }, []);
- 
+
   const generateGraphics = async () => {
     if (!postImage && !storyImage) {
-      alert("Wgraj przynajmniej jedno zdjęcie (post lub story).");
+      alert("Wgraj przynajmniej jedno zdjęcie.");
       return;
     }
     if (isDev) {
       alert("Tryb deweloperski — otwórz edytor przez link z n8n.");
       return;
     }
- 
     setStatus("sending");
- 
+
+    // Wysyłamy bgPos bezpośrednio — to jest dokładnie to co trafi do CSS
+    // w HTML generowanym przez n8n (background-position lub object-position)
     const payload = {
       match_id: m.match_id,
       post: postImage ? {
         photo_base64:   postImage,
-        photo_position: buildPhotoPosition(postNatW, postNatH, postZoom, postPos, 1080, 1080, 340),
-        photo_zoom:     `${Math.round(postZoom * 100)}%`,
+        photo_position: postBgPos,   // np. "43.2% 67.8%"
+        photo_zoom:     `${postZoom}%`,
       } : null,
       story: storyImage ? {
         photo_base64:   storyImage,
-        photo_position: buildPhotoPosition(storyNatW, storyNatH, storyZoom, storyPos, 1080, 1920, 190),
-        photo_zoom:     `${Math.round(storyZoom * 100)}%`,
+        photo_position: storyBgPos,
+        photo_zoom:     `${storyZoom}%`,
       } : null,
     };
- 
+
     try {
       const res = await fetch(N8N_WEBHOOK_URL, {
         method: "POST",
@@ -451,7 +426,7 @@ export default function PhotoEditor() {
       setStatus("error");
     }
   };
- 
+
   return (
     <div className="flex flex-col items-center gap-3 p-3 max-w-5xl mx-auto">
       <div className="text-center">
@@ -467,40 +442,37 @@ export default function PhotoEditor() {
           Każdy format ma osobne zdjęcie, zoom i pozycję. Bez foto = grafika klasyczna.
         </p>
       </div>
- 
+
       <div className="flex gap-6 flex-wrap justify-center items-start">
         <PreviewPanel
           label="Post 1080×1080" targetW={1080} targetH={1080}
-          image={postImage} imgNatW={postNatW} imgNatH={postNatH}
-          zoom={postZoom} setZoom={setPostZoom} pos={postPos} setPos={setPostPos}
-          onUpload={loadImage((src, w, h) => { setPostImage(src); setPostNatW(w); setPostNatH(h); setPostPos({ x: 0, y: 0 }); setPostZoom(1.0); })}
-          onRemove={() => { setPostImage(null); setPostPos({ x: 0, y: 0 }); setPostZoom(1.0); }}
+          image={postImage} zoom={postZoom} setZoom={setPostZoom}
+          bgPos={postBgPos} setBgPos={setPostBgPos}
+          onUpload={loadImage((src) => { setPostImage(src); setPostZoom(150); setPostBgPos("50% 50%"); })}
+          onRemove={() => { setPostImage(null); setPostZoom(150); setPostBgPos("50% 50%"); }}
           m={m} maxPreviewW={340}
         />
         <PreviewPanel
           label="Story 1080×1920" targetW={1080} targetH={1920}
-          image={storyImage} imgNatW={storyNatW} imgNatH={storyNatH}
-          zoom={storyZoom} setZoom={setStoryZoom} pos={storyPos} setPos={setStoryPos}
-          onUpload={loadImage((src, w, h) => { setStoryImage(src); setStoryNatW(w); setStoryNatH(h); setStoryPos({ x: 0, y: 0 }); setStoryZoom(1.0); })}
-          onRemove={() => { setStoryImage(null); setStoryPos({ x: 0, y: 0 }); setStoryZoom(1.0); }}
+          image={storyImage} zoom={storyZoom} setZoom={setStoryZoom}
+          bgPos={storyBgPos} setBgPos={setStoryBgPos}
+          onUpload={loadImage((src) => { setStoryImage(src); setStoryZoom(150); setStoryBgPos("50% 50%"); })}
+          onRemove={() => { setStoryImage(null); setStoryZoom(150); setStoryBgPos("50% 50%"); }}
           m={m} maxPreviewW={190}
         />
       </div>
- 
+
       <button
         onClick={generateGraphics}
         disabled={status === "sending"}
         className="px-6 py-3 rounded-lg text-sm font-bold text-white"
         style={{
-          marginTop: 8,
-          minWidth: 200,
-          border: "none",
+          marginTop: 8, minWidth: 200, border: "none",
           cursor: status === "sending" ? "not-allowed" : "pointer",
-          background:
-            status === "sending" ? "#6b7280" :
-            status === "ok"      ? "#059669" :
-            status === "error"   ? "#dc2626" :
-                                   "#2563eb",
+          background: status === "sending" ? "#6b7280"
+            : status === "ok"    ? "#059669"
+            : status === "error" ? "#dc2626"
+            :                      "#2563eb",
         }}
       >
         {status === "sending" ? "⏳ Wysyłanie…"
@@ -508,7 +480,7 @@ export default function PhotoEditor() {
          : status === "error" ? "❌ Błąd — spróbuj ponownie"
          : "🚀 Generuj grafiki z tym zdjęciem"}
       </button>
- 
+
       {status === "error" && (
         <p style={{ fontSize: 11, color: "#dc2626", textAlign: "center" }}>
           Sprawdź czy workflow w n8n jest aktywny (Production).
@@ -517,4 +489,3 @@ export default function PhotoEditor() {
     </div>
   );
 }
- 
