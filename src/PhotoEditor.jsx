@@ -1,9 +1,7 @@
 import { useState, useCallback, useRef } from "react";
 
-// ─── ZMIEŃ NA SWÓJ URL RAILWAY ───────────────────────────────────────────────
 const N8N_WEBHOOK_URL = "https://primary-production-9c937.up.railway.app/webhook/photo-editor";
 
-// ─── Odczyt danych meczu z URL params ────────────────────────────────────────
 function getMatchFromURL() {
   const p = new URLSearchParams(window.location.search);
   if (!p.get("match_id")) {
@@ -47,7 +45,7 @@ function getMatchFromURL() {
   };
 }
 
-// ========== OVERLAY COMPONENTS (bez zmian) ==================================
+// ========== OVERLAYS ==========
 
 function PhotoOverlayPost({ s, m }) {
   return (
@@ -252,10 +250,7 @@ function Accents({ s, m, w }) {
   );
 }
 
-// ========== PREVIEW PANEL — NOWA WERSJA z background-image ==================
-// Kluczowa zmiana: zamiast <img left/top> używamy background-image + background-position
-// Dzięki temu to co widzisz w podglądzie = dokładnie to co generuje Puppeteer/HCTI
-// bo HTML generowany do screenshota też używa object-fit:cover + object-position
+// ========== PREVIEW PANEL ==========
 
 function PreviewPanel({ label, targetW, targetH, image, zoom, setZoom, bgPos, setBgPos, onUpload, onRemove, m, maxPreviewW }) {
   const containerRef = useRef(null);
@@ -267,38 +262,21 @@ function PreviewPanel({ label, targetW, targetH, image, zoom, setZoom, bgPos, se
   const ph = targetH * s;
   const isStory = targetH > targetW;
 
-  // background-size: zoom% oznacza że 100% = cover (wypełnia kontener)
-  // Używamy tego samego w HTML dla Puppeteer
-  const bgStyle = image ? {
-    backgroundImage:    `url(${image})`,
-    backgroundSize:     `${zoom}%`,
-    backgroundPosition: bgPos,
-    backgroundRepeat:   "no-repeat",
-    cursor:             dragging ? "grabbing" : "grab",
-  } : {};
-
   const grad = isStory
     ? "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 15%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.85) 75%, rgba(0,0,0,0.97) 100%)"
     : "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.1) 25%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.92) 80%, rgba(0,0,0,0.97) 100%)";
 
-  // Drag — przesuwanie pozycji tła
   const onDown = (cx, cy) => {
     if (!image) return;
     setDragging(true);
-    // Parsuj aktualne % z bgPos np. "43% 67%"
     const parts = bgPos.split(" ");
-    setDragStart({
-      cx, cy,
-      px: parseFloat(parts[0]),
-      py: parseFloat(parts[1]),
-    });
+    setDragStart({ cx, cy, px: parseFloat(parts[0]), py: parseFloat(parts[1]) });
   };
 
   const onMove = (cx, cy) => {
     if (!dragging || !dragStart) return;
     const dx = cx - dragStart.cx;
     const dy = cy - dragStart.cy;
-    // Sensitivity: im większy zoom tym wolniejszy ruch
     const sens = 100 / zoom * 15;
     const newX = Math.max(0, Math.min(100, dragStart.px - dx / sens));
     const newY = Math.max(0, Math.min(100, dragStart.py - dy / sens));
@@ -322,19 +300,14 @@ function PreviewPanel({ label, targetW, targetH, image, zoom, setZoom, bgPos, se
       {image && (
         <div className="flex items-center gap-2" style={{ width: pw, marginBottom: 4 }}>
           <span style={{ fontSize: 11, color: "#888" }}>Zoom</span>
-          <input
-            type="range" min="100" max="300" step="1"
-            value={zoom}
-            onChange={(e) => setZoom(Number(e.target.value))}
-            style={{ flex: 1 }}
-          />
+          <input type="range" min="100" max="300" step="1" value={zoom} onChange={(e) => setZoom(Number(e.target.value))} style={{ flex: 1 }} />
           <span style={{ fontSize: 11, color: "#666", width: 36, textAlign: "right" }}>{zoom}%</span>
         </div>
       )}
       <div
         ref={containerRef}
-        style={{ width: pw, height: ph, ...bgStyle }}
-        className={`relative overflow-hidden rounded-lg select-none bg-gray-800`}
+        style={{ width: pw, height: ph, position: "relative", overflow: "hidden", borderRadius: 8, cursor: image ? (dragging ? "grabbing" : "grab") : "default" }}
+        className="select-none bg-gray-800"
         onMouseDown={(e) => { e.preventDefault(); onDown(e.clientX, e.clientY); }}
         onMouseMove={(e) => onMove(e.clientX, e.clientY)}
         onMouseUp={onUp}
@@ -345,6 +318,23 @@ function PreviewPanel({ label, targetW, targetH, image, zoom, setZoom, bgPos, se
       >
         {image ? (
           <>
+            {/* Warstwa 1: rozmyte tło — cover, zawsze wypełnia */}
+            <div style={{
+              position: "absolute", inset: 0,
+              backgroundImage: `url(${image})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center center",
+              filter: "blur(8px) brightness(0.45) saturate(1.3)",
+              transform: "scale(1.12)",
+            }} />
+            {/* Warstwa 2: właściwe zdjęcie z kadrowaniem */}
+            <div style={{
+              position: "absolute", inset: 0,
+              backgroundImage: `url(${image})`,
+              backgroundSize: `${zoom}%`,
+              backgroundPosition: bgPos,
+              backgroundRepeat: "no-repeat",
+            }} />
             <div className="absolute inset-0" style={{ background: grad, pointerEvents: "none" }} />
             <Accents s={s} m={m} w={8} />
             {isStory ? <PhotoOverlayStory s={s} m={m} /> : <PhotoOverlayPost s={s} m={m} />}
@@ -360,18 +350,16 @@ function PreviewPanel({ label, targetW, targetH, image, zoom, setZoom, bgPos, se
   );
 }
 
-// ========== MAIN =============================================================
+// ========== MAIN ==========
 
 export default function PhotoEditor() {
   const m    = getMatchFromURL();
   const isDev = m.match_id === "DEV";
 
-  // Post
   const [postImage,  setPostImage]  = useState(null);
-  const [postZoom,   setPostZoom]   = useState(150);   // % — 100=fit, 150=lekko większy
+  const [postZoom,   setPostZoom]   = useState(150);
   const [postBgPos,  setPostBgPos]  = useState("50% 50%");
 
-  // Story
   const [storyImage, setStoryImage] = useState(null);
   const [storyZoom,  setStoryZoom]  = useState(150);
   const [storyBgPos, setStoryBgPos] = useState("50% 50%");
@@ -396,14 +384,11 @@ export default function PhotoEditor() {
       return;
     }
     setStatus("sending");
-
-    // Wysyłamy bgPos bezpośrednio — to jest dokładnie to co trafi do CSS
-    // w HTML generowanym przez n8n (background-position lub object-position)
     const payload = {
       match_id: m.match_id,
       post: postImage ? {
         photo_base64:   postImage,
-        photo_position: postBgPos,   // np. "43.2% 67.8%"
+        photo_position: postBgPos,
         photo_zoom:     `${postZoom}%`,
       } : null,
       story: storyImage ? {
@@ -412,7 +397,6 @@ export default function PhotoEditor() {
         photo_zoom:     `${storyZoom}%`,
       } : null,
     };
-
     try {
       const res = await fetch(N8N_WEBHOOK_URL, {
         method: "POST",
@@ -439,7 +423,7 @@ export default function PhotoEditor() {
             : `${m.team_home} vs ${m.team_away}  ·  ${m.sets_home}:${m.sets_away}  ·  ${m.kolejka}  ·  mecz #${m.match_id}`}
         </p>
         <p style={{ fontSize: 10, color: "#aaa", marginTop: 2 }}>
-          Każdy format ma osobne zdjęcie, zoom i pozycję. Bez foto = grafika klasyczna.
+          Każdy format ma osobne zdjęcie, zoom i pozycję. Rozmyte tło wypełni puste miejsca.
         </p>
       </div>
 
