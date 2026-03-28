@@ -267,21 +267,22 @@ function PreviewPanel({ label, targetW, targetH, image, zoom, setZoom, bgPos, se
     : "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.1) 25%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.92) 80%, rgba(0,0,0,0.97) 100%)";
 
   const onDown = (cx, cy) => {
-    if (!image) return;
-    setDragging(true);
-    const parts = bgPos.split(" ");
-    setDragStart({ cx, cy, px: parseFloat(parts[0]), py: parseFloat(parts[1]) });
-  };
+  if (!image) return;
+  setDragging(true);
+  const parts = bgPos.split(" ");
+  setDragStart({ cx, cy, px: parseFloat(parts[0]), py: parseFloat(parts[1]) });
+};
 
-  const onMove = (cx, cy) => {
-    if (!dragging || !dragStart) return;
-    const dx = cx - dragStart.cx;
-    const dy = cy - dragStart.cy;
-    const sens = 100 / zoom * 15;
-    const newX = Math.max(0, Math.min(100, dragStart.px - dx / sens));
-    const newY = Math.max(0, Math.min(100, dragStart.py - dy / sens));
-    setBgPos(`${newX.toFixed(1)}% ${newY.toFixed(1)}%`);
-  };
+const onMove = (cx, cy) => {
+  if (!dragging || !dragStart) return;
+  const dx = cx - dragStart.cx;
+  const dy = cy - dragStart.cy;
+  // Stała czułość — bez zależności od zoom
+  const sens = 8;
+  const newX = Math.max(-50, Math.min(150, dragStart.px - dx / sens));
+  const newY = Math.max(-50, Math.min(150, dragStart.py - dy / sens));
+  setBgPos(`${newX.toFixed(1)}% ${newY.toFixed(1)}%`);
+};
 
   const onUp = () => { setDragging(false); setDragStart(null); };
 
