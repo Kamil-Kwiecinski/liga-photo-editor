@@ -388,6 +388,7 @@ export default function PhotoEditor() {
     const payload = {
       match_id:  m.match_id,
       show_sets: showSets,
+      played_sets: m.set_scores,
       post: postImage ? {
         photo_base64:   postImage,
         photo_position: postBgPos,
