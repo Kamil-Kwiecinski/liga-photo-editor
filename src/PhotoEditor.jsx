@@ -274,22 +274,23 @@ function PreviewPanel({ label, targetW, targetH, image, zoom, setZoom, bgPos, se
     ? "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 15%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.85) 75%, rgba(0,0,0,0.97) 100%)"
     : "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.1) 25%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.92) 80%, rgba(0,0,0,0.97) 100%)";
 
-  const onDown = (cx, cy) => {
-    if (!image) return;
-    setDragging(true);
-    const parts = bgPos.split(" ");
-    setDragStart({ cx, cy, px: parseFloat(parts[0]), py: parseFloat(parts[1]) });
-  };
-
-  const onMove = (cx, cy) => {
-    if (!dragging || !dragStart) return;
-    const dx = cx - dragStart.cx;
-    const dy = cy - dragStart.cy;
-    const sens = 3;
-    const newX = Math.max(-50, Math.min(150, dragStart.px - dx / sens));
-    const newY = Math.max(-50, Math.min(150, dragStart.py + dy / sens));
-    setBgPos(`${newX.toFixed(1)}% ${newY.toFixed(1)}%`);
-  };
+const onDown = (cx, cy) => {
+  if (!image) return;
+  setDragging(true);
+  // bgPos teraz w px np. "120px 80px"
+  const parts = bgPos.replace(/px/g, '').split(' ');
+  setDragStart({ cx, cy, px: parseFloat(parts[0]), py: parseFloat(parts[1]) });
+};
+  
+const onMove = (cx, cy) => {
+  if (!dragging || !dragStart) return;
+  const dx = cx - dragStart.cx;
+  const dy = cy - dragStart.cy;
+  const newX = dragStart.px + dx;
+  const newY = dragStart.py + dy;
+  setBgPos(`${newX.toFixed(0)}px ${newY.toFixed(0)}px`);
+};
+  
 
   const onUp = () => { setDragging(false); setDragStart(null); };
 
@@ -366,11 +367,11 @@ export default function PhotoEditor() {
 
   const [postImage,  setPostImage]  = useState(null);
   const [postZoom,   setPostZoom]   = useState(150);
-  const [postBgPos,  setPostBgPos]  = useState("50% 50%");
+  const [postBgPos,  setPostBgPos]  = useState("0px 0px");
 
   const [storyImage, setStoryImage] = useState(null);
   const [storyZoom,  setStoryZoom]  = useState(150);
-  const [storyBgPos, setStoryBgPos] = useState("50% 50%");
+  const [storyBgPos, setStoryBgPos] = useState("0px 0px");
 
   const [showSets, setShowSets] = useState(false);
   const [status,   setStatus]   = useState(null);
@@ -461,7 +462,7 @@ export default function PhotoEditor() {
           label="Post 1080×1080" targetW={1080} targetH={1080}
           image={postImage} zoom={postZoom} setZoom={setPostZoom}
           bgPos={postBgPos} setBgPos={setPostBgPos}
-          onUpload={loadImage((src) => { setPostImage(src); setPostZoom(150); setPostBgPos("50% 50%"); })}
+          onUpload={loadImage((src) => { setPostImage(src); setPostZoom(150); setPostBgPos("0px 0px"); })}
           onRemove={() => { setPostImage(null); setPostZoom(150); setPostBgPos("50% 50%"); }}
           m={m} maxPreviewW={340} showSets={showSets}
         />
@@ -469,7 +470,7 @@ export default function PhotoEditor() {
           label="Story 1080×1920" targetW={1080} targetH={1920}
           image={storyImage} zoom={storyZoom} setZoom={setStoryZoom}
           bgPos={storyBgPos} setBgPos={setStoryBgPos}
-          onUpload={loadImage((src) => { setStoryImage(src); setStoryZoom(150); setStoryBgPos("50% 50%"); })}
+          onUpload={loadImage((src) => { setPostImage(src); setPostZoom(150); setPostBgPos("0px 0px"); })}
           onRemove={() => { setStoryImage(null); setStoryZoom(150); setStoryBgPos("50% 50%"); }}
           m={m} maxPreviewW={190} showSets={showSets}
         />
