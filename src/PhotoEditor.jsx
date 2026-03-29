@@ -47,7 +47,7 @@ function getMatchFromURL() {
 
 // ========== OVERLAYS ==========
 
-function PhotoOverlayPost({ s, m }) {
+function PhotoOverlayPost({ s, m, showSets }) {
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-end z-10" style={{ pointerEvents: "none", paddingBottom: 40 * s }}>
       <div style={{ position: "absolute", top: 20 * s, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.6)", borderRadius: "50%", width: 90 * s, height: 90 * s, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -56,7 +56,7 @@ function PhotoOverlayPost({ s, m }) {
       <div style={{ position: "absolute", top: 130 * s, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.5)", padding: `${4 * s}px ${20 * s}px`, borderRadius: 12 * s }}>
         <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 20 * s, fontWeight: 600, letterSpacing: 2, textTransform: "uppercase" }}>{m.kolejka}</span>
       </div>
-      <div className="flex items-center justify-center" style={{ gap: 24 * s, marginBottom: 20 * s }}>
+      <div className="flex items-center justify-center" style={{ gap: 24 * s, marginBottom: showSets ? 10 * s : 20 * s }}>
         <div className="flex flex-col items-center" style={{ width: 240 * s }}>
           <div style={{ width: 100 * s, height: 100 * s, borderRadius: "50%", background: "rgba(0,0,0,0.4)", border: `${3 * s}px solid ${m.color_home}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <span style={{ color: m.color_home, fontSize: 32 * s, fontWeight: 800 }}>{m.team_home.charAt(0)}</span>
@@ -73,12 +73,12 @@ function PhotoOverlayPost({ s, m }) {
           <span style={{ background: m.color_away, color: "#0d1117", fontSize: 20 * s, fontWeight: 700, padding: `${4 * s}px ${16 * s}px`, borderRadius: 10 * s, marginTop: 10 * s }}>{m.team_away}</span>
         </div>
       </div>
-      <SetScoresColored s={s} m={m} fontSize={28} />
+      {showSets && <SetScoresColored s={s} m={m} fontSize={28} />}
     </div>
   );
 }
 
-function PhotoOverlayStory({ s, m }) {
+function PhotoOverlayStory({ s, m, showSets }) {
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-end z-10" style={{ pointerEvents: "none", paddingBottom: 80 * s }}>
       <div style={{ position: "absolute", top: 60 * s, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.6)", borderRadius: "50%", width: 120 * s, height: 120 * s, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -87,7 +87,7 @@ function PhotoOverlayStory({ s, m }) {
       <div style={{ position: "absolute", top: 210 * s, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.5)", padding: `${6 * s}px ${24 * s}px`, borderRadius: 16 * s }}>
         <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 26 * s, fontWeight: 600, letterSpacing: 2, textTransform: "uppercase" }}>{m.kolejka}</span>
       </div>
-      <div className="flex items-center justify-center" style={{ gap: 30 * s, marginBottom: 30 * s }}>
+      <div className="flex items-center justify-center" style={{ gap: 30 * s, marginBottom: showSets ? 10 * s : 30 * s }}>
         <div className="flex flex-col items-center" style={{ width: 260 * s }}>
           <div style={{ width: 130 * s, height: 130 * s, borderRadius: "50%", background: "rgba(0,0,0,0.4)", border: `${4 * s}px solid ${m.color_home}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <span style={{ color: m.color_home, fontSize: 42 * s, fontWeight: 800 }}>{m.team_home.charAt(0)}</span>
@@ -104,7 +104,7 @@ function PhotoOverlayStory({ s, m }) {
           <span style={{ background: m.color_away, color: "#0d1117", fontSize: 26 * s, fontWeight: 700, padding: `${6 * s}px ${20 * s}px`, borderRadius: 12 * s, marginTop: 12 * s }}>{m.team_away}</span>
         </div>
       </div>
-      <SetScoresColored s={s} m={m} fontSize={32} />
+      {showSets && <SetScoresColored s={s} m={m} fontSize={32} />}
     </div>
   );
 }
@@ -252,7 +252,7 @@ function Accents({ s, m, w }) {
 
 // ========== PREVIEW PANEL ==========
 
-function PreviewPanel({ label, targetW, targetH, image, zoom, setZoom, bgPos, setBgPos, onUpload, onRemove, m, maxPreviewW }) {
+function PreviewPanel({ label, targetW, targetH, image, zoom, setZoom, bgPos, setBgPos, onUpload, onRemove, m, maxPreviewW, showSets }) {
   const containerRef = useRef(null);
   const [dragging, setDragging]   = useState(false);
   const [dragStart, setDragStart] = useState(null);
@@ -267,22 +267,21 @@ function PreviewPanel({ label, targetW, targetH, image, zoom, setZoom, bgPos, se
     : "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.1) 25%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.92) 80%, rgba(0,0,0,0.97) 100%)";
 
   const onDown = (cx, cy) => {
-  if (!image) return;
-  setDragging(true);
-  const parts = bgPos.split(" ");
-  setDragStart({ cx, cy, px: parseFloat(parts[0]), py: parseFloat(parts[1]) });
-};
+    if (!image) return;
+    setDragging(true);
+    const parts = bgPos.split(" ");
+    setDragStart({ cx, cy, px: parseFloat(parts[0]), py: parseFloat(parts[1]) });
+  };
 
-const onMove = (cx, cy) => {
-  if (!dragging || !dragStart) return;
-  const dx = cx - dragStart.cx;
-  const dy = cy - dragStart.cy;
-  // Stała czułość — bez zależności od zoom
-  const sens = 3;
-  const newX = Math.max(-50, Math.min(150, dragStart.px - dx / sens));
-  const newY = Math.max(-50, Math.min(150, dragStart.py + dy / sens));
-  setBgPos(`${newX.toFixed(1)}% ${newY.toFixed(1)}%`);
-};
+  const onMove = (cx, cy) => {
+    if (!dragging || !dragStart) return;
+    const dx = cx - dragStart.cx;
+    const dy = cy - dragStart.cy;
+    const sens = 3;
+    const newX = Math.max(-50, Math.min(150, dragStart.px - dx / sens));
+    const newY = Math.max(-50, Math.min(150, dragStart.py + dy / sens));
+    setBgPos(`${newX.toFixed(1)}% ${newY.toFixed(1)}%`);
+  };
 
   const onUp = () => { setDragging(false); setDragStart(null); };
 
@@ -319,7 +318,6 @@ const onMove = (cx, cy) => {
       >
         {image ? (
           <>
-            {/* Warstwa 1: rozmyte tło — cover, zawsze wypełnia */}
             <div style={{
               position: "absolute", inset: 0,
               backgroundImage: `url(${image})`,
@@ -328,7 +326,6 @@ const onMove = (cx, cy) => {
               filter: "blur(8px) brightness(0.45) saturate(1.3)",
               transform: "scale(1.12)",
             }} />
-            {/* Warstwa 2: właściwe zdjęcie z kadrowaniem */}
             <div style={{
               position: "absolute", inset: 0,
               backgroundImage: `url(${image})`,
@@ -338,7 +335,9 @@ const onMove = (cx, cy) => {
             }} />
             <div className="absolute inset-0" style={{ background: grad, pointerEvents: "none" }} />
             <Accents s={s} m={m} w={8} />
-            {isStory ? <PhotoOverlayStory s={s} m={m} /> : <PhotoOverlayPost s={s} m={m} />}
+            {isStory
+              ? <PhotoOverlayStory s={s} m={m} showSets={showSets} />
+              : <PhotoOverlayPost  s={s} m={m} showSets={showSets} />}
           </>
         ) : (
           isStory ? <NoPhotoStory s={s} m={m} /> : <NoPhotoPost s={s} m={m} />
@@ -354,7 +353,7 @@ const onMove = (cx, cy) => {
 // ========== MAIN ==========
 
 export default function PhotoEditor() {
-  const m    = getMatchFromURL();
+  const m     = getMatchFromURL();
   const isDev = m.match_id === "DEV";
 
   const [postImage,  setPostImage]  = useState(null);
@@ -365,7 +364,8 @@ export default function PhotoEditor() {
   const [storyZoom,  setStoryZoom]  = useState(150);
   const [storyBgPos, setStoryBgPos] = useState("50% 50%");
 
-  const [status, setStatus] = useState(null);
+  const [showSets, setShowSets] = useState(false);
+  const [status,   setStatus]   = useState(null);
 
   const loadImage = useCallback((callback) => (e) => {
     const file = e.target.files?.[0];
@@ -386,7 +386,8 @@ export default function PhotoEditor() {
     }
     setStatus("sending");
     const payload = {
-      match_id: m.match_id,
+      match_id:  m.match_id,
+      show_sets: showSets,
       post: postImage ? {
         photo_base64:   postImage,
         photo_position: postBgPos,
@@ -423,10 +424,28 @@ export default function PhotoEditor() {
             ? "⚠️ Tryb deweloperski — brak parametrów w URL"
             : `${m.team_home} vs ${m.team_away}  ·  ${m.sets_home}:${m.sets_away}  ·  ${m.kolejka}  ·  mecz #${m.match_id}`}
         </p>
-        <p style={{ fontSize: 10, color: "#aaa", marginTop: 2 }}>
-          Każdy format ma osobne zdjęcie, zoom i pozycję. Rozmyte tło wypełni puste miejsca.
-        </p>
       </div>
+
+      {/* Toggle setów */}
+      <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", userSelect: "none" }}>
+        <div
+          onClick={() => setShowSets(v => !v)}
+          style={{
+            width: 44, height: 24, borderRadius: 12,
+            background: showSets ? "#2563eb" : "#374151",
+            position: "relative", transition: "background 0.2s", flexShrink: 0,
+          }}
+        >
+          <div style={{
+            position: "absolute", top: 3, left: showSets ? 22 : 3,
+            width: 18, height: 18, borderRadius: "50%",
+            background: "#fff", transition: "left 0.2s",
+          }} />
+        </div>
+        <span style={{ fontSize: 12, color: "var(--color-text-secondary, #888)" }}>
+          Pokaż wyniki setów pod wynikiem
+        </span>
+      </label>
 
       <div className="flex gap-6 flex-wrap justify-center items-start">
         <PreviewPanel
@@ -435,7 +454,7 @@ export default function PhotoEditor() {
           bgPos={postBgPos} setBgPos={setPostBgPos}
           onUpload={loadImage((src) => { setPostImage(src); setPostZoom(150); setPostBgPos("50% 50%"); })}
           onRemove={() => { setPostImage(null); setPostZoom(150); setPostBgPos("50% 50%"); }}
-          m={m} maxPreviewW={340}
+          m={m} maxPreviewW={340} showSets={showSets}
         />
         <PreviewPanel
           label="Story 1080×1920" targetW={1080} targetH={1920}
@@ -443,7 +462,7 @@ export default function PhotoEditor() {
           bgPos={storyBgPos} setBgPos={setStoryBgPos}
           onUpload={loadImage((src) => { setStoryImage(src); setStoryZoom(150); setStoryBgPos("50% 50%"); })}
           onRemove={() => { setStoryImage(null); setStoryZoom(150); setStoryBgPos("50% 50%"); }}
-          m={m} maxPreviewW={190}
+          m={m} maxPreviewW={190} showSets={showSets}
         />
       </div>
 
