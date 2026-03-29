@@ -158,15 +158,23 @@ function NoPhotoStory({ s, m }) {
 
 function SetScoresColored({ s, m, fontSize }) {
   return (
-    <div className="flex items-center" style={{ gap: 4 * s }}>
+    <div style={{
+      background: "rgba(0,0,0,0.55)",
+      borderRadius: 12 * s,
+      padding: `${8 * s}px ${18 * s}px`,
+      marginTop: 8 * s,
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 4 * s,
+    }}>
       {m.set_scores.map((sc, i) => {
         const homeWon = sc.home > sc.away;
         return (
-          <div key={i} className="flex items-center">
-            {i > 0 && <span style={{ color: "rgba(255,255,255,0.3)", margin: `0 ${6 * s}px`, fontSize: fontSize * s }}>|</span>}
-            <span style={{ color: homeWon ? m.color_home : m.color_home + '66', fontWeight: homeWon ? 800 : 400, fontSize: fontSize * s }}>{sc.home}</span>
-            <span style={{ color: "rgba(255,255,255,0.4)", fontSize: fontSize * s }}>:</span>
-            <span style={{ color: homeWon ? m.color_away + '66' : m.color_away, fontWeight: homeWon ? 400 : 800, fontSize: fontSize * s }}>{sc.away}</span>
+          <div key={i} style={{ display: "inline-flex", alignItems: "center" }}>
+            {i > 0 && <span style={{ fontSize: fontSize * s, color: "rgba(255,255,255,0.2)", margin: `0 ${8 * s}px` }}>|</span>}
+            <span style={{ fontSize: fontSize * s, fontWeight: homeWon ? 800 : 400, color: homeWon ? m.color_home : m.color_home + '99' }}>{sc.home}</span>
+            <span style={{ fontSize: fontSize * s * 0.7, color: "rgba(255,255,255,0.3)" }}>:</span>
+            <span style={{ fontSize: fontSize * s, fontWeight: homeWon ? 400 : 800, color: homeWon ? m.color_away + '99' : m.color_away }}>{sc.away}</span>
           </div>
         );
       })}
