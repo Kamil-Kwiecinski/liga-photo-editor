@@ -278,9 +278,9 @@ const onMove = (cx, cy) => {
   const dx = cx - dragStart.cx;
   const dy = cy - dragStart.cy;
   // Stała czułość — bez zależności od zoom
-  const sens = 8;
+  const sens = 3;
   const newX = Math.max(-50, Math.min(150, dragStart.px - dx / sens));
-  const newY = Math.max(-50, Math.min(150, dragStart.py - dy / sens));
+  const newY = Math.max(-50, Math.min(150, dragStart.py + dy / sens));
   setBgPos(`${newX.toFixed(1)}% ${newY.toFixed(1)}%`);
 };
 
