@@ -400,12 +400,12 @@ const onMove = (cx, cy) => {
             <div style={{
               position: "absolute", inset: 0,
               backgroundImage: `url(${image})`,
-              backgroundSize: `${zoom}%`,
+              backgroundSize: `${Math.round(pw * zoom / 100)}px auto`,
               backgroundPosition: bgPos,
               backgroundRepeat: "no-repeat",
             }} />
             <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${image})`, backgroundSize: "cover", backgroundPosition: "center center", filter: "blur(8px) brightness(0.45) saturate(1.3)", transform: "scale(1.12)" }} />
-            <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${image})`, backgroundSize: `${zoom}%`, backgroundPosition: bgPos, backgroundRepeat: "no-repeat" }} />
+            <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${image})`, backgroundSize: `${Math.round(pw * zoom / 100)}px auto`, backgroundPosition: bgPos, backgroundRepeat: "no-repeat" }} />
             <div className="absolute inset-0" style={{ background: grad, pointerEvents: "none" }} />
             <Accents s={s} m={m} w={8} />
             {isStory
