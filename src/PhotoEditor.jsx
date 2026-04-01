@@ -282,10 +282,9 @@ const onMove = (cx, cy) => {
   if (!dragging || !dragStart) return;
   const dx = cx - dragStart.cx;
   const dy = cy - dragStart.cy;
-  const sens = 3;
-  const newX = Math.max(-50, Math.min(150, dragStart.px - dx / sens));
-  const newY = Math.max(-50, Math.min(150, dragStart.py + dy / sens));
-  setBgPos(`${newX.toFixed(1)}% ${newY.toFixed(1)}%`);
+  const newX = dragStart.px + dx;
+  const newY = dragStart.py + dy / 2;
+  setBgPos(`${newX.toFixed(0)}px ${newY.toFixed(0)}px`);
 };
   const onUp = () => { setDragging(false); setDragStart(null); };
 
