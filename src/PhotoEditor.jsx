@@ -7,8 +7,8 @@ function getMatchFromURL() {
   if (!p.get("match_id")) {
     return {
       match_id: "DEV",
-      team_home: "Iskra Lubań",
-      team_away: "Turbo Ślimaki",
+      team_home: "Team A",
+      team_away: "Team B",
       sets_home: 3, sets_away: 0,
       set_scores: [{ home: 25, away: 22 }, { home: 25, away: 15 }, { home: 25, away: 10 }],
       kolejka: "Ćwierćfinały",
@@ -272,17 +272,21 @@ function PreviewPanel({ label, targetW, targetH, image, zoom, setZoom, bgPos, se
     : "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.1) 25%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.92) 80%, rgba(0,0,0,0.97) 100%)";
 
   const onDown = (cx, cy) => {
-    if (!image) return;
-    setDragging(true);
-    const parts = bgPos.replace(/px/g, '').split(' ');
-    setDragStart({ cx, cy, px: parseFloat(parts[0]), py: parseFloat(parts[1]) });
-  };
-  const onMove = (cx, cy) => {
-    if (!dragging || !dragStart) return;
-    const dx = cx - dragStart.cx;
-    const dy = cy - dragStart.cy;
-    setBgPos(`${(dragStart.px + dx).toFixed(0)}px ${(dragStart.py + dy).toFixed(0)}px`);
-  };
+  if (!image) return;
+  setDragging(true);
+  const parts = bgPos.replace(/%/g, '').split(' ');
+  setDragStart({ cx, cy, px: parseFloat(parts[0]), py: parseFloat(parts[1]) });
+};
+
+const onMove = (cx, cy) => {
+  if (!dragging || !dragStart) return;
+  const dx = cx - dragStart.cx;
+  const dy = cy - dragStart.cy;
+  const sens = 3;
+  const newX = Math.max(-50, Math.min(150, dragStart.px - dx / sens));
+  const newY = Math.max(-50, Math.min(150, dragStart.py + dy / sens));
+  setBgPos(`${newX.toFixed(1)}% ${newY.toFixed(1)}%`);
+};
   const onUp = () => { setDragging(false); setDragStart(null); };
 
   return (
@@ -389,13 +393,13 @@ export default function PhotoEditor() {
 
   const [postImage, setPostImage] = useState(null);
   const [postZoom, setPostZoom] = useState(150);
-  const [postBgPos, setPostBgPos] = useState("0px 0px");
+  const [postBgPos, setPostBgPos] = useState("50% 50%");
   const [postShowSets, setPostShowSets] = useState(false);
   const [postSponsors, setPostSponsors] = useState([]);
 
   const [storyImage, setStoryImage] = useState(null);
   const [storyZoom, setStoryZoom] = useState(150);
-  const [storyBgPos, setStoryBgPos] = useState("0px 0px");
+  const [storyBgPos, setStoryBgPos] = useState("50% 50%");
   const [storyShowSets, setStoryShowSets] = useState(false);
   const [storySponsors, setStorySponsors] = useState([]);
 
