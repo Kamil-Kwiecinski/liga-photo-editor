@@ -38,75 +38,22 @@ function getMatchFromURL() {
   };
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-// Przelicz pozycję z px (drag offset w podglądzie) na % (background-position)
-//
-// Jak działa CSS background-position w %:
-//   X% oznacza: punkt X% obrazka trafia na punkt X% kontenera.
-//   0% 0%   = lewy górny róg obrazka w lewym górnym rogu kontenera
-//   50% 50% = środek obrazka na środku kontenera (domyślne)
-//   100% 100% = prawy dolny róg obrazka w prawym dolnym rogu kontenera
-//
-// Drag w podglądzie:
-//   bgPos = "Xpx Ypx" — offset przesunięcia od pozycji startowej.
-//   Startowa pozycja to 0px 0px, co odpowiada LEWEMU GÓRNEMU ROGOWI
-//   (background-position: 0px 0px w CSS = lewy górny).
-//   Przesunięcie w prawo (dodatni X) = obraz jedzie w prawo = widzimy LEWĄ część.
-//   Przesunięcie w dół (dodatni Y) = obraz jedzie w dół = widzimy GÓRNĄ część.
-//
-// Przeliczenie:
-//   maxOffset = (imgSize - containerSize) — max px jakie można przesunąć
-//   ratio = px / maxOffset — ile z dostępnego zakresu wykorzystano (0..1)
-//   Ale: drag przesuwa obraz W PRAWO przy dodatnim px,
-//        a background-position 0% = obraz przesunięty MAKSYMALNIE W LEWO.
-//   Więc NIE odwracamy — px=0 → 0%, px=max → 100%.
-//   To jest POPRAWNE bo:
-//     - drag offset 0px = obraz w lewym górnym rogu = bg-pos 0% 0% ✓
-//     - drag offset max = obraz w prawym dolnym rogu = bg-pos 100% 100% ✓
-//
-// Domyślny start to 50% 50% (wycentrowany) — ustawiamy to w stanie początkowym.
-// ────────────────────────────────────────────────────────────────────────────
-
 function pxToPercent(bgPos, zoom, targetW, targetH, previewW) {
   const parts = bgPos.replace(/px/g, '').split(' ');
   const px = parseFloat(parts[0]) || 0;
   const py = parseFloat(parts[1]) || 0;
-
-  // Wymiary podglądu
   const scale = previewW / targetW;
   const previewH = targetH * scale;
-
-  // Wymiary obrazka w podglądzie przy danym zoom
   const imgW = previewW * (zoom / 100);
   const imgH = previewH * (zoom / 100);
-
-  // Maksymalny zakres przesunięcia w px
   const maxX = imgW - previewW;
   const maxY = imgH - previewH;
-
-  // Przelicz na procenty (0% = lewy/górny, 100% = prawy/dolny)
-  // px jest UJEMNY gdy ciągniemy obraz w lewo (odsłaniamy prawą stronę)
-  // px jest DODATNI gdy ciągniemy obraz w prawo (odsłaniamy lewą stronę)
-  //
-  // CSS background-position:
-  //   0%   = lewa/górna krawędź obrazka przy lewej/górnej krawędzi kontenera
-  //   100% = prawa/dolna krawędź obrazka przy prawej/dolnej krawędzi kontenera
-  //
-  // Drag w naszym edytorze przesuwa obraz (nie viewport), więc:
-  //   px > 0 (obraz w prawo) = widzimy lewą część = mały % w bg-position
-  //   px < 0 (obraz w lewo) = widzimy prawą część = duży % w bg-position
-  //
-  // Formuła: procent = -px / maxOffset * 100
-  //   px=0 → 0% (ale my startujemy od środka, patrz initialBgPos)
-  //   Ujemny px → dodatni procent → obraz przesuwa się w prawo w bg-position
-
-  const xPct = maxX > 0 ? Math.max(0, Math.min(100, (-px / maxX) * 100)) : 50;
-  const yPct = maxY > 0 ? Math.max(0, Math.min(100, (-py / maxY) * 100)) : 50;
-
+  // Bez clamp — wartości poza 0-100% = obraz wychodzi poza kontener (widać blur)
+  const xPct = maxX > 0 ? (-px / maxX) * 100 : 50;
+  const yPct = maxY > 0 ? (-py / maxY) * 100 : 50;
   return `${xPct.toFixed(1)}% ${yPct.toFixed(1)}%`;
 }
 
-// Oblicz początkową pozycję drag (px) odpowiadającą bg-position 50% 50%
 function initialBgPos(zoom, targetW, targetH, previewW) {
   const scale = previewW / targetW;
   const previewH = targetH * scale;
@@ -114,10 +61,22 @@ function initialBgPos(zoom, targetW, targetH, previewW) {
   const imgH = previewH * (zoom / 100);
   const maxX = imgW - previewW;
   const maxY = imgH - previewH;
-  // 50% = -px / max * 100 → px = -max * 0.5
-  const px = -(maxX * 0.5);
-  const py = -(maxY * 0.5);
-  return `${px.toFixed(0)}px ${py.toFixed(0)}px`;
+  return `${(-(maxX * 0.5)).toFixed(0)}px ${(-(maxY * 0.5)).toFixed(0)}px`;
+}
+
+function rescaleBgPos(bgPos, oldZoom, newZoom, targetW, targetH, previewW) {
+  const parts = bgPos.replace(/px/g, '').split(' ');
+  const oldPx = parseFloat(parts[0]) || 0;
+  const oldPy = parseFloat(parts[1]) || 0;
+  const scale = previewW / targetW;
+  const previewH = targetH * scale;
+  const oldMaxX = previewW * (oldZoom / 100) - previewW;
+  const oldMaxY = previewH * (oldZoom / 100) - previewH;
+  const newMaxX = previewW * (newZoom / 100) - previewW;
+  const newMaxY = previewH * (newZoom / 100) - previewH;
+  const newPx = oldMaxX > 0 ? (oldPx / oldMaxX) * newMaxX : -(newMaxX * 0.5);
+  const newPy = oldMaxY > 0 ? (oldPy / oldMaxY) * newMaxY : -(newMaxY * 0.5);
+  return `${newPx.toFixed(0)}px ${newPy.toFixed(0)}px`;
 }
 
 // ========== OVERLAYS ==========
@@ -328,7 +287,7 @@ function TeamCircle({ s, m, team, size, fontSize, light }) {
 
 // ========== PREVIEW PANEL ==========
 
-function PreviewPanel({ label, targetW, targetH, image, zoom, setZoom, bgPos, setBgPos, onUpload, onRemove, m, maxPreviewW, showSets, selectedSponsors, onZoomChange }) {
+function PreviewPanel({ label, targetW, targetH, image, zoom, bgPos, setBgPos, m, maxPreviewW, showSets, selectedSponsors, onUpload, onRemove, onZoomChange }) {
   const containerRef = useRef(null);
   const [dragging, setDragging] = useState(false);
   const [dragStart, setDragStart] = useState(null);
@@ -342,10 +301,6 @@ function PreviewPanel({ label, targetW, targetH, image, zoom, setZoom, bgPos, se
     ? "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 15%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.85) 75%, rgba(0,0,0,0.97) 100%)"
     : "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.1) 25%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.92) 80%, rgba(0,0,0,0.97) 100%)";
 
-  // Podgląd: używamy background-position w px bezpośrednio
-  // bgPos to "Xpx Ypx" — offset od lewego górnego rogu
-  // Obraz jest wyświetlany z background-size: zoom%
-
   const onDown = (cx, cy) => {
     if (!image) return;
     setDragging(true);
@@ -357,13 +312,8 @@ function PreviewPanel({ label, targetW, targetH, image, zoom, setZoom, bgPos, se
     if (!dragging || !dragStart) return;
     const dx = cx - dragStart.cx;
     const dy = cy - dragStart.cy;
-    // Ograniczamy przesunięcie do zakresu [-(imgSize - containerSize), 0]
-    const imgW = pw * (zoom / 100);
-    const imgH = ph * (zoom / 100);
-    const minX = -(imgW - pw);
-    const minY = -(imgH - ph);
-    const newX = Math.max(minX, Math.min(0, dragStart.px + dx));
-    const newY = Math.max(minY, Math.min(0, dragStart.py + dy));
+    const newX = dragStart.px + dx;
+    const newY = dragStart.py + dy;
     setBgPos(`${newX.toFixed(0)}px ${newY.toFixed(0)}px`);
   };
 
@@ -385,10 +335,7 @@ function PreviewPanel({ label, targetW, targetH, image, zoom, setZoom, bgPos, se
         <div className="flex items-center gap-2" style={{ width: pw, marginBottom: 4 }}>
           <span style={{ fontSize: 11, color: "#888" }}>Zoom</span>
           <input type="range" min="100" max="300" step="1" value={zoom}
-            onChange={(e) => {
-              const newZoom = Number(e.target.value);
-              onZoomChange(newZoom);
-            }}
+            onChange={(e) => onZoomChange(Number(e.target.value))}
             style={{ flex: 1 }} />
           <span style={{ fontSize: 11, color: "#666", width: 36, textAlign: "right" }}>{zoom}%</span>
         </div>
@@ -524,11 +471,14 @@ export default function PhotoEditor() {
         <div className="flex flex-col items-center gap-2">
           <PreviewPanel
             label="Post 1080×1080" targetW={1080} targetH={1080}
-            image={postImage} zoom={postZoom} setZoom={setPostZoom} bgPos={postBgPos} setBgPos={setPostBgPos}
+            image={postImage} zoom={postZoom} bgPos={postBgPos} setBgPos={setPostBgPos}
             onUpload={loadImage((src) => { setPostImage(src); setPostZoom(150); setPostBgPos(initialBgPos(150, 1080, 1080, 340)); })}
             onRemove={() => { setPostImage(null); setPostZoom(150); setPostBgPos(initialBgPos(150, 1080, 1080, 340)); }}
             m={m} maxPreviewW={340} showSets={postShowSets} selectedSponsors={postSponsors}
-            onZoomChange={(z) => { setPostZoom(z); setPostBgPos(initialBgPos(z, 1080, 1080, 340)); }}
+            onZoomChange={(z) => {
+              setPostBgPos(prev => rescaleBgPos(prev, postZoom, z, 1080, 1080, 340));
+              setPostZoom(z);
+            }}
           />
           <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", userSelect: "none" }}>
             <div onClick={() => setPostShowSets(v => !v)} style={{ width: 36, height: 20, borderRadius: 10, background: postShowSets ? "#2563eb" : "#374151", position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
@@ -543,11 +493,14 @@ export default function PhotoEditor() {
         <div className="flex flex-col items-center gap-2">
           <PreviewPanel
             label="Story 1080×1920" targetW={1080} targetH={1920}
-            image={storyImage} zoom={storyZoom} setZoom={setStoryZoom} bgPos={storyBgPos} setBgPos={setStoryBgPos}
+            image={storyImage} zoom={storyZoom} bgPos={storyBgPos} setBgPos={setStoryBgPos}
             onUpload={loadImage((src) => { setStoryImage(src); setStoryZoom(150); setStoryBgPos(initialBgPos(150, 1080, 1920, 190)); })}
             onRemove={() => { setStoryImage(null); setStoryZoom(150); setStoryBgPos(initialBgPos(150, 1080, 1920, 190)); }}
             m={m} maxPreviewW={190} showSets={storyShowSets} selectedSponsors={storySponsors}
-            onZoomChange={(z) => { setStoryZoom(z); setStoryBgPos(initialBgPos(z, 1080, 1920, 190)); }}
+            onZoomChange={(z) => {
+              setStoryBgPos(prev => rescaleBgPos(prev, storyZoom, z, 1080, 1920, 190));
+              setStoryZoom(z);
+            }}
           />
           <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", userSelect: "none" }}>
             <div onClick={() => setStoryShowSets(v => !v)} style={{ width: 36, height: 20, borderRadius: 10, background: storyShowSets ? "#2563eb" : "#374151", position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
