@@ -38,44 +38,89 @@ function getMatchFromURL() {
   };
 }
 
-function pxToPercent(bgPos, zoom, targetW, targetH, previewW) {
+// ────────────────────────────────────────────────────────────────────────────
+// KLUCZOWA LOGIKA: Obliczenia rozmiaru obrazka przy background-size: X%
+//
+// CSS background-size: 150% oznacza: szerokość obrazka = 150% szerokości kontenera.
+// Wysokość obrazka jest proporcjonalna do naturalnych wymiarów zdjęcia.
+//
+// Przykład: zdjęcie 4000x2000 (landscape 2:1) w kontenerze 1080x1080 (1:1):
+//   background-size: 150% → imgW = 1080 * 1.5 = 1620px
+//   imgH = 1620 * (2000/4000) = 810px  ← MNIEJSZE niż kontener!
+//   Zakres Y = 810 - 1080 = -270px → obraz nie wypełnia kontenera w pionie
+//
+// Dlatego MUSIMY znać naturalne wymiary zdjęcia.
+// ────────────────────────────────────────────────────────────────────────────
+
+// Oblicz wymiary obrazka renderowanego w kontenerze przy danym zoom
+// containerW/H = wymiary kontenera (podglądu lub docelowego)
+// natW/natH = naturalne wymiary zdjęcia
+// zoom = np. 150 (procent)
+function getRenderedImageSize(containerW, containerH, natW, natH, zoom) {
+  const imgW = containerW * (zoom / 100);
+  const imgH = imgW * (natH / natW);
+  return { imgW, imgH };
+}
+
+// Przelicz drag offset (px w podglądzie) na background-position %
+// Uniwersalne — działa dla dowolnych proporcji zdjęcia i kontenera
+function pxToPercent(bgPos, zoom, targetW, targetH, previewW, natW, natH) {
   const parts = bgPos.replace(/px/g, '').split(' ');
   const px = parseFloat(parts[0]) || 0;
   const py = parseFloat(parts[1]) || 0;
+
+  // Wymiary podglądu
   const scale = previewW / targetW;
   const previewH = targetH * scale;
-  const imgW = previewW * (zoom / 100);
-  const imgH = previewH * (zoom / 100);
+
+  // Rzeczywiste wymiary obrazka w podglądzie
+  const { imgW, imgH } = getRenderedImageSize(previewW, previewH, natW, natH, zoom);
+
+  // Zakres przesunięcia w px
   const maxX = imgW - previewW;
   const maxY = imgH - previewH;
-  // Bez clamp — wartości poza 0-100% = obraz wychodzi poza kontener (widać blur)
+
+  // Przelicz na % — bez clampu, żeby obraz mógł wychodzić poza krawędzie
   const xPct = maxX > 0 ? (-px / maxX) * 100 : 50;
   const yPct = maxY > 0 ? (-py / maxY) * 100 : 50;
+
   return `${xPct.toFixed(1)}% ${yPct.toFixed(1)}%`;
 }
 
-function initialBgPos(zoom, targetW, targetH, previewW) {
+// Oblicz startowy drag offset (px) odpowiadający bg-position 50% 50%
+function initialBgPos(zoom, targetW, targetH, previewW, natW, natH) {
+  if (!natW || !natH) {
+    // Fallback jeśli nie mamy jeszcze wymiarów (nie powinno się zdarzyć)
+    return "0px 0px";
+  }
   const scale = previewW / targetW;
   const previewH = targetH * scale;
-  const imgW = previewW * (zoom / 100);
-  const imgH = previewH * (zoom / 100);
+  const { imgW, imgH } = getRenderedImageSize(previewW, previewH, natW, natH, zoom);
   const maxX = imgW - previewW;
   const maxY = imgH - previewH;
   return `${(-(maxX * 0.5)).toFixed(0)}px ${(-(maxY * 0.5)).toFixed(0)}px`;
 }
 
-function rescaleBgPos(bgPos, oldZoom, newZoom, targetW, targetH, previewW) {
+// Przelicz bgPos ze starego zoomu na nowy zachowując proporcję kadru
+function rescaleBgPos(bgPos, oldZoom, newZoom, targetW, targetH, previewW, natW, natH) {
   const parts = bgPos.replace(/px/g, '').split(' ');
   const oldPx = parseFloat(parts[0]) || 0;
   const oldPy = parseFloat(parts[1]) || 0;
+
   const scale = previewW / targetW;
   const previewH = targetH * scale;
-  const oldMaxX = previewW * (oldZoom / 100) - previewW;
-  const oldMaxY = previewH * (oldZoom / 100) - previewH;
-  const newMaxX = previewW * (newZoom / 100) - previewW;
-  const newMaxY = previewH * (newZoom / 100) - previewH;
+
+  const oldImg = getRenderedImageSize(previewW, previewH, natW, natH, oldZoom);
+  const newImg = getRenderedImageSize(previewW, previewH, natW, natH, newZoom);
+
+  const oldMaxX = oldImg.imgW - previewW;
+  const oldMaxY = oldImg.imgH - previewH;
+  const newMaxX = newImg.imgW - previewW;
+  const newMaxY = newImg.imgH - previewH;
+
   const newPx = oldMaxX > 0 ? (oldPx / oldMaxX) * newMaxX : -(newMaxX * 0.5);
   const newPy = oldMaxY > 0 ? (oldPy / oldMaxY) * newMaxY : -(newMaxY * 0.5);
+
   return `${newPx.toFixed(0)}px ${newPy.toFixed(0)}px`;
 }
 
@@ -287,7 +332,7 @@ function TeamCircle({ s, m, team, size, fontSize, light }) {
 
 // ========== PREVIEW PANEL ==========
 
-function PreviewPanel({ label, targetW, targetH, image, zoom, bgPos, setBgPos, m, maxPreviewW, showSets, selectedSponsors, onUpload, onRemove, onZoomChange }) {
+function PreviewPanel({ label, targetW, targetH, image, imageNat, zoom, bgPos, setBgPos, m, maxPreviewW, showSets, selectedSponsors, onUpload, onRemove, onZoomChange }) {
   const containerRef = useRef(null);
   const [dragging, setDragging] = useState(false);
   const [dragStart, setDragStart] = useState(null);
@@ -406,25 +451,39 @@ export default function PhotoEditor() {
   const m = getMatchFromURL();
   const isDev = m.match_id === "DEV";
 
+  // Post state
   const [postImage, setPostImage] = useState(null);
+  const [postImageNat, setPostImageNat] = useState({ w: 0, h: 0 }); // naturalne wymiary
   const [postZoom, setPostZoom] = useState(150);
-  const [postBgPos, setPostBgPos] = useState(() => initialBgPos(150, 1080, 1080, 340));
+  const [postBgPos, setPostBgPos] = useState("0px 0px");
   const [postShowSets, setPostShowSets] = useState(false);
   const [postSponsors, setPostSponsors] = useState([]);
 
+  // Story state
   const [storyImage, setStoryImage] = useState(null);
+  const [storyImageNat, setStoryImageNat] = useState({ w: 0, h: 0 });
   const [storyZoom, setStoryZoom] = useState(150);
-  const [storyBgPos, setStoryBgPos] = useState(() => initialBgPos(150, 1080, 1920, 190));
+  const [storyBgPos, setStoryBgPos] = useState("0px 0px");
   const [storyShowSets, setStoryShowSets] = useState(false);
   const [storySponsors, setStorySponsors] = useState([]);
 
   const [status, setStatus] = useState(null);
 
-  const loadImage = useCallback((callback) => (e) => {
+  // Wczytaj zdjęcie i odczytaj naturalne wymiary
+  const loadImage = useCallback((onLoaded, targetW, targetH, previewW) => (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => callback(ev.target.result);
+    reader.onload = (ev) => {
+      const src = ev.target.result;
+      const img = new Image();
+      img.onload = () => {
+        const nat = { w: img.naturalWidth, h: img.naturalHeight };
+        const initPos = initialBgPos(150, targetW, targetH, previewW, nat.w, nat.h);
+        onLoaded(src, nat, initPos);
+      };
+      img.src = src;
+    };
     reader.readAsDataURL(file);
   }, []);
 
@@ -437,14 +496,14 @@ export default function PhotoEditor() {
       played_sets: m.set_scores,
       post: postImage ? {
         photo_base64: postImage,
-        photo_position: pxToPercent(postBgPos, postZoom, 1080, 1080, 340),
+        photo_position: pxToPercent(postBgPos, postZoom, 1080, 1080, 340, postImageNat.w, postImageNat.h),
         photo_zoom: `${postZoom}%`,
         show_sets: postShowSets,
         sponsorzy: postSponsors,
       } : null,
       story: storyImage ? {
         photo_base64: storyImage,
-        photo_position: pxToPercent(storyBgPos, storyZoom, 1080, 1920, 190),
+        photo_position: pxToPercent(storyBgPos, storyZoom, 1080, 1920, 190, storyImageNat.w, storyImageNat.h),
         photo_zoom: `${storyZoom}%`,
         show_sets: storyShowSets,
         sponsorzy: storySponsors,
@@ -471,12 +530,15 @@ export default function PhotoEditor() {
         <div className="flex flex-col items-center gap-2">
           <PreviewPanel
             label="Post 1080×1080" targetW={1080} targetH={1080}
-            image={postImage} zoom={postZoom} bgPos={postBgPos} setBgPos={setPostBgPos}
-            onUpload={loadImage((src) => { setPostImage(src); setPostZoom(150); setPostBgPos(initialBgPos(150, 1080, 1080, 340)); })}
-            onRemove={() => { setPostImage(null); setPostZoom(150); setPostBgPos(initialBgPos(150, 1080, 1080, 340)); }}
+            image={postImage} imageNat={postImageNat} zoom={postZoom} bgPos={postBgPos} setBgPos={setPostBgPos}
+            onUpload={loadImage(
+              (src, nat, initPos) => { setPostImage(src); setPostImageNat(nat); setPostZoom(150); setPostBgPos(initPos); },
+              1080, 1080, 340
+            )}
+            onRemove={() => { setPostImage(null); setPostImageNat({ w: 0, h: 0 }); setPostZoom(150); setPostBgPos("0px 0px"); }}
             m={m} maxPreviewW={340} showSets={postShowSets} selectedSponsors={postSponsors}
             onZoomChange={(z) => {
-              setPostBgPos(prev => rescaleBgPos(prev, postZoom, z, 1080, 1080, 340));
+              setPostBgPos(prev => rescaleBgPos(prev, postZoom, z, 1080, 1080, 340, postImageNat.w, postImageNat.h));
               setPostZoom(z);
             }}
           />
@@ -493,12 +555,15 @@ export default function PhotoEditor() {
         <div className="flex flex-col items-center gap-2">
           <PreviewPanel
             label="Story 1080×1920" targetW={1080} targetH={1920}
-            image={storyImage} zoom={storyZoom} bgPos={storyBgPos} setBgPos={setStoryBgPos}
-            onUpload={loadImage((src) => { setStoryImage(src); setStoryZoom(150); setStoryBgPos(initialBgPos(150, 1080, 1920, 190)); })}
-            onRemove={() => { setStoryImage(null); setStoryZoom(150); setStoryBgPos(initialBgPos(150, 1080, 1920, 190)); }}
+            image={storyImage} imageNat={storyImageNat} zoom={storyZoom} bgPos={storyBgPos} setBgPos={setStoryBgPos}
+            onUpload={loadImage(
+              (src, nat, initPos) => { setStoryImage(src); setStoryImageNat(nat); setStoryZoom(150); setStoryBgPos(initPos); },
+              1080, 1920, 190
+            )}
+            onRemove={() => { setStoryImage(null); setStoryImageNat({ w: 0, h: 0 }); setStoryZoom(150); setStoryBgPos("0px 0px"); }}
             m={m} maxPreviewW={190} showSets={storyShowSets} selectedSponsors={storySponsors}
             onZoomChange={(z) => {
-              setStoryBgPos(prev => rescaleBgPos(prev, storyZoom, z, 1080, 1920, 190));
+              setStoryBgPos(prev => rescaleBgPos(prev, storyZoom, z, 1080, 1920, 190, storyImageNat.w, storyImageNat.h));
               setStoryZoom(z);
             }}
           />
