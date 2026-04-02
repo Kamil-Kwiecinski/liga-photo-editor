@@ -38,6 +38,22 @@ function getMatchFromURL() {
   };
 }
 
+// Przelicz pozycję z px (podgląd) na % (dla Puppeteer 1080px)
+function pxToPercent(bgPos, zoom, targetW, targetH, previewW) {
+  const parts = bgPos.replace(/px/g, '').split(' ');
+  const px = parseFloat(parts[0]) || 0;
+  const py = parseFloat(parts[1]) || 0;
+  const s = previewW / targetW;
+  const previewH = targetH * s;
+  const imgW = previewW * zoom / 100;
+  const imgH = previewH * zoom / 100;
+  const maxX = imgW - previewW;
+  const maxY = imgH - previewH;
+  const xPct = maxX > 0 ? Math.max(0, Math.min(100, (px / maxX) * 100)) : 50;
+  const yPct = maxY > 0 ? Math.max(0, Math.min(100, (py / maxY) * 100)) : 50;
+  return `${xPct.toFixed(1)}% ${yPct.toFixed(1)}%`;
+}
+
 // ========== OVERLAYS ==========
 
 function PhotoOverlayPost({ s, m, showSets, selectedSponsors }) {
@@ -264,7 +280,7 @@ function PreviewPanel({ label, targetW, targetH, image, zoom, setZoom, bgPos, se
     if (!image) return;
     setDragging(true);
     const parts = bgPos.replace(/px/g, '').split(' ');
-    setDragStart({ cx, cy, px: parseFloat(parts[0]), py: parseFloat(parts[1]) });
+    setDragStart({ cx, cy, px: parseFloat(parts[0]) || 0, py: parseFloat(parts[1]) || 0 });
   };
 
   const onMove = (cx, cy) => {
@@ -328,11 +344,9 @@ function PreviewPanel({ label, targetW, targetH, image, zoom, setZoom, bgPos, se
 
 function SponsorsSelector({ sponsorzy, selected, setSelected }) {
   if (sponsorzy.length === 0) return null;
-
   const toggle = (url) => {
     setSelected(prev => prev.includes(url) ? prev.filter(u => u !== url) : [...prev, url]);
   };
-
   return (
     <div style={{ background: "rgba(0,0,0,0.15)", borderRadius: 10, padding: "10px 14px" }}>
       <p style={{ fontSize: 11, color: "var(--color-text-secondary, #888)", marginBottom: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>
@@ -392,8 +406,20 @@ export default function PhotoEditor() {
     const payload = {
       match_id: m.match_id,
       played_sets: m.set_scores,
-      post: postImage ? { photo_base64: postImage, photo_position: postBgPos, photo_zoom: `${postZoom}%`, show_sets: postShowSets, sponsorzy: postSponsors } : null,
-      story: storyImage ? { photo_base64: storyImage, photo_position: storyBgPos, photo_zoom: `${storyZoom}%`, show_sets: storyShowSets, sponsorzy: storySponsors } : null,
+      post: postImage ? {
+        photo_base64: postImage,
+        photo_position: pxToPercent(postBgPos, postZoom, 1080, 1080, 340),
+        photo_zoom: `${postZoom}%`,
+        show_sets: postShowSets,
+        sponsorzy: postSponsors,
+      } : null,
+      story: storyImage ? {
+        photo_base64: storyImage,
+        photo_position: pxToPercent(storyBgPos, storyZoom, 1080, 1920, 190),
+        photo_zoom: `${storyZoom}%`,
+        show_sets: storyShowSets,
+        sponsorzy: storySponsors,
+      } : null,
     };
     try {
       const res = await fetch(N8N_WEBHOOK_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
