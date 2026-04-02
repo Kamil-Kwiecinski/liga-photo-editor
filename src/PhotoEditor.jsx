@@ -9,19 +9,9 @@ function getMatchFromURL() {
       match_id: "DEV",
       team_home: "Iskra Lubań",
       team_away: "Turbo Ślimaki",
-      sets_home: 3,
-      sets_away: 0,
-      set_scores: [
-        { home: 25, away: 22 },
-        { home: 25, away: 15 },
-        { home: 25, away: 10 },
-      ],
       sets_home: 3, sets_away: 0,
       set_scores: [{ home: 25, away: 22 }, { home: 25, away: 15 }, { home: 25, away: 10 }],
       kolejka: "Ćwierćfinały",
-      color_home: "#d4ba0f",
-      color_away: "#fc77c2",
-      color_liga: "#004aad",
       color_home: "#d4ba0f", color_away: "#fc77c2", color_liga: "#004aad",
       sponsorzy: [],
     };
@@ -29,12 +19,6 @@ function getMatchFromURL() {
   const wynik = p.get("wynik") || "0:0";
   const [sh, sa] = wynik.split(":").map(Number);
   const setyRaw = p.get("sety") || "";
-  const set_scores = setyRaw
-    ? setyRaw.split(",").map((s) => {
-        const [h, a] = s.split(":").map(Number);
-        return { home: h || 0, away: a || 0 };
-      })
-    : [];
   const set_scores = setyRaw ? setyRaw.split(",").map(s => {
     const [h, a] = s.split(":").map(Number);
     return { home: h || 0, away: a || 0 };
@@ -42,13 +26,6 @@ function getMatchFromURL() {
   const sponsorzyRaw = p.get("sponsorzy") || "";
   const sponsorzy = sponsorzyRaw ? sponsorzyRaw.split(",").filter(Boolean) : [];
   return {
-    match_id:   p.get("match_id"),
-    team_home:  p.get("team_home")  || "Drużyna A",
-    team_away:  p.get("team_away")  || "Drużyna B",
-    sets_home:  sh || 0,
-    sets_away:  sa || 0,
-    set_scores,
-    kolejka:    p.get("kolejka")    || "",
     match_id: p.get("match_id"),
     team_home: p.get("team_home") || "Drużyna A",
     team_away: p.get("team_away") || "Drużyna B",
@@ -63,10 +40,8 @@ function getMatchFromURL() {
 
 // ========== OVERLAYS ==========
 
-function PhotoOverlayPost({ s, m, showSets }) {
 function PhotoOverlayPost({ s, m, showSets, selectedSponsors }) {
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-end z-10" style={{ pointerEvents: "none", paddingBottom: 40 * s }}>
     <div className="absolute inset-0 flex flex-col items-center justify-end z-10" style={{ pointerEvents: "none", paddingBottom: (40 + (selectedSponsors.length > 0 ? 80 * s : 0)) * s }}>
       <div style={{ position: "absolute", top: 20 * s, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.6)", borderRadius: "50%", width: 90 * s, height: 90 * s, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <span style={{ color: "#fff", fontSize: 12 * s, fontWeight: 700 }}>LIGA</span>
@@ -92,14 +67,8 @@ function PhotoOverlayPost({ s, m, showSets, selectedSponsors }) {
         </div>
       </div>
       {showSets && <SetScoresColored s={s} m={m} fontSize={28} />}
-      {/* Pasek sponsorów w podglądzie */}
       {selectedSponsors.length > 0 && (
-        <div style={{
-          position: "absolute", bottom: 0, left: 0, right: 0,
-          height: 80 * s, background: "rgba(0,0,0,0.8)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          gap: 8 * s, borderTop: "1px solid rgba(255,255,255,0.1)"
-        }}>
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 80 * s, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 * s }}>
           {selectedSponsors.map((url, i) => (
             <img key={i} src={url} alt="" style={{ height: 42 * s, maxWidth: 120 * s, objectFit: "contain", filter: "brightness(0) invert(1)" }} />
           ))}
@@ -109,10 +78,8 @@ function PhotoOverlayPost({ s, m, showSets, selectedSponsors }) {
   );
 }
 
-function PhotoOverlayStory({ s, m, showSets }) {
 function PhotoOverlayStory({ s, m, showSets, selectedSponsors }) {
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-end z-10" style={{ pointerEvents: "none", paddingBottom: 80 * s }}>
     <div className="absolute inset-0 flex flex-col items-center justify-end z-10" style={{ pointerEvents: "none", paddingBottom: (80 + (selectedSponsors.length > 0 ? 100 * s : 0)) * s }}>
       <div style={{ position: "absolute", top: 60 * s, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.6)", borderRadius: "50%", width: 120 * s, height: 120 * s, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <span style={{ color: "#fff", fontSize: 16 * s, fontWeight: 700 }}>LIGA</span>
@@ -139,12 +106,7 @@ function PhotoOverlayStory({ s, m, showSets, selectedSponsors }) {
       </div>
       {showSets && <SetScoresColored s={s} m={m} fontSize={32} />}
       {selectedSponsors.length > 0 && (
-        <div style={{
-          position: "absolute", bottom: 0, left: 0, right: 0,
-          height: 100 * s, background: "rgba(0,0,0,0.8)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          gap: 8 * s, borderTop: "1px solid rgba(255,255,255,0.1)"
-        }}>
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 100 * s, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 * s }}>
           {selectedSponsors.map((url, i) => (
             <img key={i} src={url} alt="" style={{ height: 52 * s, maxWidth: 140 * s, objectFit: "contain", filter: "brightness(0) invert(1)" }} />
           ))}
@@ -157,7 +119,6 @@ function PhotoOverlayStory({ s, m, showSets, selectedSponsors }) {
 function NoPhotoPost({ s, m }) {
   return (
     <div className="absolute inset-0" style={{ background: `linear-gradient(180deg, ${m.color_liga} 0%, #001533 100%)` }}>
-      <Accents s={s} m={m} w={10} />
       <div className="absolute inset-0 flex flex-col items-center justify-center z-10" style={{ pointerEvents: "none", gap: 12 * s }}>
         <LigaLogo s={s} m={m} size={90} light />
         <KolejkaBadge s={s} m={m} fontSize={22} light />
@@ -175,7 +136,6 @@ function NoPhotoPost({ s, m }) {
 function NoPhotoStory({ s, m }) {
   return (
     <div className="absolute inset-0" style={{ background: `linear-gradient(180deg, ${m.color_liga} 0%, #001533 40%, #001533 100%)` }}>
-      <Accents s={s} m={m} w={10} />
       <div className="absolute inset-0 flex flex-col items-center justify-evenly z-10" style={{ pointerEvents: "none", paddingTop: 20 * s, paddingBottom: 20 * s }}>
         <div className="flex flex-col items-center" style={{ gap: 12 * s }}>
           <LigaLogo s={s} m={m} size={120} light />
@@ -203,15 +163,6 @@ function NoPhotoStory({ s, m }) {
 
 function SetScoresColored({ s, m, fontSize }) {
   return (
-    <div style={{
-      background: "rgba(0,0,0,0.55)",
-      borderRadius: 12 * s,
-      padding: `${8 * s}px ${18 * s}px`,
-      marginTop: 8 * s,
-      display: "inline-flex",
-      alignItems: "center",
-      gap: 4 * s,
-    }}>
     <div style={{ background: "rgba(0,0,0,0.55)", borderRadius: 12 * s, padding: `${8 * s}px ${18 * s}px`, marginTop: 8 * s, display: "inline-flex", alignItems: "center", gap: 4 * s }}>
       {m.set_scores.map((sc, i) => {
         const homeWon = sc.home > sc.away;
@@ -293,27 +244,13 @@ function TeamCircle({ s, m, team, size, fontSize, light }) {
   );
 }
 
-function Accents({ s, m, w }) {
-  return (
-    <>
-      <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: w * s, background: `linear-gradient(180deg, ${m.color_home}, ${m.color_home} 50%, ${m.color_away} 50%, ${m.color_away})`, zIndex: 3, pointerEvents: "none" }} />
-      <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: w * s, background: `linear-gradient(180deg, ${m.color_home}, ${m.color_home} 50%, ${m.color_away} 50%, ${m.color_away})`, zIndex: 3, pointerEvents: "none" }} />
-      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6 * s, background: `linear-gradient(90deg, ${m.color_home}, ${m.color_liga}, ${m.color_away})`, zIndex: 3, pointerEvents: "none" }} />
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 6 * s, background: `linear-gradient(90deg, ${m.color_home}, ${m.color_liga}, ${m.color_away})`, zIndex: 3, pointerEvents: "none" }} />
-    </>
-  );
-}
-
 // ========== PREVIEW PANEL ==========
 
-function PreviewPanel({ label, targetW, targetH, image, zoom, setZoom, bgPos, setBgPos, onUpload, onRemove, m, maxPreviewW, showSets }) {
 function PreviewPanel({ label, targetW, targetH, image, zoom, setZoom, bgPos, setBgPos, onUpload, onRemove, m, maxPreviewW, showSets, selectedSponsors }) {
   const containerRef = useRef(null);
-  const [dragging, setDragging]   = useState(false);
   const [dragging, setDragging] = useState(false);
   const [dragStart, setDragStart] = useState(null);
 
-  const s  = maxPreviewW / targetW;
   const s = maxPreviewW / targetW;
   const pw = targetW * s;
   const ph = targetH * s;
@@ -323,36 +260,20 @@ function PreviewPanel({ label, targetW, targetH, image, zoom, setZoom, bgPos, se
     ? "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 15%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.85) 75%, rgba(0,0,0,0.97) 100%)"
     : "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.1) 25%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.92) 80%, rgba(0,0,0,0.97) 100%)";
 
-const onDown = (cx, cy) => {
-  if (!image) return;
-  setDragging(true);
-  // bgPos teraz w px np. "120px 80px"
-  const parts = bgPos.replace(/px/g, '').split(' ');
-  setDragStart({ cx, cy, px: parseFloat(parts[0]), py: parseFloat(parts[1]) });
-};
-  
-const onMove = (cx, cy) => {
-  if (!dragging || !dragStart) return;
-  const dx = cx - dragStart.cx;
-  const dy = cy - dragStart.cy;
-  const newX = dragStart.px + dx;
-  const newY = dragStart.py + dy;
-  setBgPos(`${newX.toFixed(0)}px ${newY.toFixed(0)}px`);
-};
-  
-
   const onDown = (cx, cy) => {
     if (!image) return;
     setDragging(true);
     const parts = bgPos.replace(/px/g, '').split(' ');
     setDragStart({ cx, cy, px: parseFloat(parts[0]), py: parseFloat(parts[1]) });
   };
+
   const onMove = (cx, cy) => {
     if (!dragging || !dragStart) return;
     const dx = cx - dragStart.cx;
     const dy = cy - dragStart.cy;
     setBgPos(`${(dragStart.px + dx).toFixed(0)}px ${(dragStart.py + dy).toFixed(0)}px`);
   };
+
   const onUp = () => { setDragging(false); setDragStart(null); };
 
   return (
@@ -380,8 +301,6 @@ const onMove = (cx, cy) => {
         className="select-none bg-gray-800"
         onMouseDown={(e) => { e.preventDefault(); onDown(e.clientX, e.clientY); }}
         onMouseMove={(e) => onMove(e.clientX, e.clientY)}
-        onMouseUp={onUp}
-        onMouseLeave={onUp}
         onMouseUp={onUp} onMouseLeave={onUp}
         onTouchStart={(e) => { const t = e.touches[0]; onDown(t.clientX, t.clientY); }}
         onTouchMove={(e) => { e.preventDefault(); const t = e.touches[0]; onMove(t.clientX, t.clientY); }}
@@ -389,28 +308,10 @@ const onMove = (cx, cy) => {
       >
         {image ? (
           <>
-            <div style={{
-              position: "absolute", inset: 0,
-              backgroundImage: `url(${image})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center center",
-              filter: "blur(8px) brightness(0.45) saturate(1.3)",
-              transform: "scale(1.12)",
-            }} />
-            <div style={{
-              position: "absolute", inset: 0,
-              backgroundImage: `url(${image})`,
-              backgroundSize: `${Math.round(pw * zoom / 100)}px auto`,
-              backgroundPosition: bgPos,
-              backgroundRepeat: "no-repeat",
-            }} />
             <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${image})`, backgroundSize: "cover", backgroundPosition: "center center", filter: "blur(8px) brightness(0.45) saturate(1.3)", transform: "scale(1.12)" }} />
-            <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${image})`, backgroundSize: `${Math.round(pw * zoom / 100)}px auto`, backgroundPosition: bgPos, backgroundRepeat: "no-repeat" }} />
+            <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${image})`, backgroundSize: `${zoom}%`, backgroundPosition: bgPos, backgroundRepeat: "no-repeat" }} />
             <div className="absolute inset-0" style={{ background: grad, pointerEvents: "none" }} />
-            <Accents s={s} m={m} w={8} />
             {isStory
-              ? <PhotoOverlayStory s={s} m={m} showSets={showSets} />
-              : <PhotoOverlayPost  s={s} m={m} showSets={showSets} />}
               ? <PhotoOverlayStory s={s} m={m} showSets={showSets} selectedSponsors={selectedSponsors} />
               : <PhotoOverlayPost s={s} m={m} showSets={showSets} selectedSponsors={selectedSponsors} />}
           </>
@@ -418,8 +319,6 @@ const onMove = (cx, cy) => {
           isStory ? <NoPhotoStory s={s} m={m} /> : <NoPhotoPost s={s} m={m} />
         )}
       </div>
-      {image && (
-        <p style={{ fontSize: 10, color: "#999", marginTop: 2 }}>Przeciągnij żeby zmienić kadr</p>
       {image && <p style={{ fontSize: 10, color: "#999", marginTop: 2 }}>Przeciągnij żeby zmienić kadr</p>}
     </div>
   );
@@ -431,13 +330,11 @@ function SponsorsSelector({ sponsorzy, selected, setSelected }) {
   if (sponsorzy.length === 0) return null;
 
   const toggle = (url) => {
-    setSelected(prev =>
-      prev.includes(url) ? prev.filter(u => u !== url) : [...prev, url]
-    );
+    setSelected(prev => prev.includes(url) ? prev.filter(u => u !== url) : [...prev, url]);
   };
 
   return (
-    <div style={{ background: "rgba(0,0,0,0.15)", borderRadius: 10, padding: "10px 14px", maxWidth: 600 }}>
+    <div style={{ background: "rgba(0,0,0,0.15)", borderRadius: 10, padding: "10px 14px" }}>
       <p style={{ fontSize: 11, color: "var(--color-text-secondary, #888)", marginBottom: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>
         Sponsorzy na grafice
       </p>
@@ -445,20 +342,7 @@ function SponsorsSelector({ sponsorzy, selected, setSelected }) {
         {sponsorzy.map((url, i) => {
           const isSelected = selected.includes(url);
           return (
-            <div
-              key={i}
-              onClick={() => toggle(url)}
-              style={{
-                border: isSelected ? "2px solid #2563eb" : "2px solid rgba(255,255,255,0.15)",
-                borderRadius: 8,
-                padding: "6px 10px",
-                cursor: "pointer",
-                background: isSelected ? "rgba(37,99,235,0.15)" : "rgba(255,255,255,0.05)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                minWidth: 80, height: 44,
-                transition: "all 0.15s",
-              }}
-            >
+            <div key={i} onClick={() => toggle(url)} style={{ border: isSelected ? "2px solid #2563eb" : "2px solid rgba(255,255,255,0.15)", borderRadius: 8, padding: "6px 10px", cursor: "pointer", background: isSelected ? "rgba(37,99,235,0.15)" : "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", minWidth: 80, height: 44, transition: "all 0.15s" }}>
               <img src={url} alt={`Sponsor ${i + 1}`} style={{ height: 28, maxWidth: 100, objectFit: "contain" }} />
             </div>
           );
@@ -476,13 +360,9 @@ function SponsorsSelector({ sponsorzy, selected, setSelected }) {
 // ========== MAIN ==========
 
 export default function PhotoEditor() {
-  const m     = getMatchFromURL();
   const m = getMatchFromURL();
   const isDev = m.match_id === "DEV";
 
-  const [postImage,  setPostImage]  = useState(null);
-  const [postZoom,   setPostZoom]   = useState(150);
-  const [postBgPos,  setPostBgPos]  = useState("0px 0px");
   const [postImage, setPostImage] = useState(null);
   const [postZoom, setPostZoom] = useState(150);
   const [postBgPos, setPostBgPos] = useState("0px 0px");
@@ -490,14 +370,11 @@ export default function PhotoEditor() {
   const [postSponsors, setPostSponsors] = useState([]);
 
   const [storyImage, setStoryImage] = useState(null);
-  const [storyZoom,  setStoryZoom]  = useState(150);
   const [storyZoom, setStoryZoom] = useState(150);
   const [storyBgPos, setStoryBgPos] = useState("0px 0px");
   const [storyShowSets, setStoryShowSets] = useState(false);
   const [storySponsors, setStorySponsors] = useState([]);
 
-  const [showSets, setShowSets] = useState(false);
-  const [status,   setStatus]   = useState(null);
   const [status, setStatus] = useState(null);
 
   const loadImage = useCallback((callback) => (e) => {
@@ -509,83 +386,31 @@ export default function PhotoEditor() {
   }, []);
 
   const generateGraphics = async () => {
-    if (!postImage && !storyImage) {
-      alert("Wgraj przynajmniej jedno zdjęcie.");
-      return;
-    }
-    if (isDev) {
-      alert("Tryb deweloperski — otwórz edytor przez link z n8n.");
-      return;
-    }
     if (!postImage && !storyImage) { alert("Wgraj przynajmniej jedno zdjęcie."); return; }
     if (isDev) { alert("Tryb deweloperski — otwórz edytor przez link z n8n."); return; }
     setStatus("sending");
     const payload = {
-      match_id:  m.match_id,
-      show_sets: showSets,
       match_id: m.match_id,
       played_sets: m.set_scores,
-      post: postImage ? {
-        photo_base64:   postImage,
-        photo_position: postBgPos,
-        photo_zoom:     `${postZoom}%`,
-        photo_base64: postImage, photo_position: postBgPos, photo_zoom: `${postZoom}%`,
-        show_sets: postShowSets, sponsorzy: postSponsors,
-      } : null,
-      story: storyImage ? {
-        photo_base64:   storyImage,
-        photo_position: storyBgPos,
-        photo_zoom:     `${storyZoom}%`,
-        photo_base64: storyImage, photo_position: storyBgPos, photo_zoom: `${storyZoom}%`,
-        show_sets: storyShowSets, sponsorzy: storySponsors,
-      } : null,
+      post: postImage ? { photo_base64: postImage, photo_position: postBgPos, photo_zoom: `${postZoom}%`, show_sets: postShowSets, sponsorzy: postSponsors } : null,
+      story: storyImage ? { photo_base64: storyImage, photo_position: storyBgPos, photo_zoom: `${storyZoom}%`, show_sets: storyShowSets, sponsorzy: storySponsors } : null,
     };
     try {
-      const res = await fetch(N8N_WEBHOOK_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
       const res = await fetch(N8N_WEBHOOK_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setStatus("ok");
-    } catch (err) {
-      console.error(err);
-      setStatus("error");
-    }
     } catch (err) { console.error(err); setStatus("error"); }
   };
 
   return (
     <div className="flex flex-col items-center gap-3 p-3 max-w-5xl mx-auto">
       <div className="text-center">
-        <h2 style={{ fontSize: 16, fontWeight: 500, color: "var(--color-text-primary, #222)", margin: 0 }}>
-          Edytor zdjęcia meczu
-        </h2>
         <h2 style={{ fontSize: 16, fontWeight: 500, color: "var(--color-text-primary, #222)", margin: 0 }}>Edytor zdjęcia meczu</h2>
         <p style={{ fontSize: 11, color: isDev ? "#f59e0b" : "var(--color-text-secondary, #888)", marginTop: 4 }}>
-          {isDev
-            ? "⚠️ Tryb deweloperski — brak parametrów w URL"
-          {isDev ? "⚠️ Tryb deweloperski — brak parametrów w URL"
-            : `${m.team_home} vs ${m.team_away}  ·  ${m.sets_home}:${m.sets_away}  ·  ${m.kolejka}  ·  mecz #${m.match_id}`}
+          {isDev ? "⚠️ Tryb deweloperski — brak parametrów w URL" : `${m.team_home} vs ${m.team_away}  ·  ${m.sets_home}:${m.sets_away}  ·  ${m.kolejka}  ·  mecz #${m.match_id}`}
         </p>
       </div>
 
-      {/* Toggle setów */}
-      <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", userSelect: "none" }}>
-        <div
-          onClick={() => setShowSets(v => !v)}
-          style={{
-            width: 44, height: 24, borderRadius: 12,
-            background: showSets ? "#2563eb" : "#374151",
-            position: "relative", transition: "background 0.2s", flexShrink: 0,
-          }}
-        >
-          <div style={{
-            position: "absolute", top: 3, left: showSets ? 22 : 3,
-            width: 18, height: 18, borderRadius: "50%",
-            background: "#fff", transition: "left 0.2s",
-          }} />
       <div className="flex gap-6 flex-wrap justify-center items-start">
         {/* POST */}
         <div className="flex flex-col items-center gap-2">
@@ -604,28 +429,7 @@ export default function PhotoEditor() {
           </label>
           <SponsorsSelector sponsorzy={m.sponsorzy} selected={postSponsors} setSelected={setPostSponsors} />
         </div>
-        <span style={{ fontSize: 12, color: "var(--color-text-secondary, #888)" }}>
-          Pokaż wyniki setów pod wynikiem
-        </span>
-      </label>
 
-      <div className="flex gap-6 flex-wrap justify-center items-start">
-        <PreviewPanel
-          label="Post 1080×1080" targetW={1080} targetH={1080}
-          image={postImage} zoom={postZoom} setZoom={setPostZoom}
-          bgPos={postBgPos} setBgPos={setPostBgPos}
-          onUpload={loadImage((src) => { setPostImage(src); setPostZoom(150); setPostBgPos("0px 0px"); })}
-          onRemove={() => { setPostImage(null); setPostZoom(150); setPostBgPos("50% 50%"); }}
-          m={m} maxPreviewW={340} showSets={showSets}
-        />
-        <PreviewPanel
-          label="Story 1080×1920" targetW={1080} targetH={1920}
-          image={storyImage} zoom={storyZoom} setZoom={setStoryZoom}
-          bgPos={storyBgPos} setBgPos={setStoryBgPos}
-          onUpload={loadImage((src) => { setPostImage(src); setPostZoom(150); setPostBgPos("0px 0px"); })}
-          onRemove={() => { setStoryImage(null); setStoryZoom(150); setStoryBgPos("50% 50%"); }}
-          m={m} maxPreviewW={190} showSets={showSets}
-        />
         {/* STORY */}
         <div className="flex flex-col items-center gap-2">
           <PreviewPanel
@@ -645,34 +449,12 @@ export default function PhotoEditor() {
         </div>
       </div>
 
-      <button
-        onClick={generateGraphics}
-        disabled={status === "sending"}
-        onClick={generateGraphics} disabled={status === "sending"}
-        className="px-6 py-3 rounded-lg text-sm font-bold text-white"
-        style={{
-          marginTop: 8, minWidth: 200, border: "none",
-          cursor: status === "sending" ? "not-allowed" : "pointer",
-          background: status === "sending" ? "#6b7280"
-            : status === "ok"    ? "#059669"
-            : status === "error" ? "#dc2626"
-            :                      "#2563eb",
-        }}
+      <button onClick={generateGraphics} disabled={status === "sending"} className="px-6 py-3 rounded-lg text-sm font-bold text-white"
         style={{ marginTop: 8, minWidth: 200, border: "none", cursor: status === "sending" ? "not-allowed" : "pointer",
-          background: status === "sending" ? "#6b7280" : status === "ok" ? "#059669" : status === "error" ? "#dc2626" : "#2563eb" }}
-      >
-        {status === "sending" ? "⏳ Wysyłanie…"
-         : status === "ok"    ? "✅ Wysłano! Grafiki za chwilę w arkuszu."
-         : status === "error" ? "❌ Błąd — spróbuj ponownie"
-         : "🚀 Generuj grafiki z tym zdjęciem"}
+          background: status === "sending" ? "#6b7280" : status === "ok" ? "#059669" : status === "error" ? "#dc2626" : "#2563eb" }}>
         {status === "sending" ? "⏳ Wysyłanie…" : status === "ok" ? "✅ Wysłano! Grafiki za chwilę w arkuszu." : status === "error" ? "❌ Błąd — spróbuj ponownie" : "🚀 Generuj grafiki z tym zdjęciem"}
       </button>
 
-      {status === "error" && (
-        <p style={{ fontSize: 11, color: "#dc2626", textAlign: "center" }}>
-          Sprawdź czy workflow w n8n jest aktywny (Production).
-        </p>
-      )}
       {status === "error" && <p style={{ fontSize: 11, color: "#dc2626", textAlign: "center" }}>Sprawdź czy workflow w n8n jest aktywny (Production).</p>}
     </div>
   );
