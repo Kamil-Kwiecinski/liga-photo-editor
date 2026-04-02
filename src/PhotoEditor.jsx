@@ -43,6 +43,7 @@ function pxToPercent(bgPos, zoom, targetW, targetH, previewW) {
   const parts = bgPos.replace(/px/g, '').split(' ');
   const px = parseFloat(parts[0]) || 0;
   const py = parseFloat(parts[1]) || 0;
+  if (px === 0 && py === 0) return '50% 50%';
   const s = previewW / targetW;
   const previewH = targetH * s;
   const imgW = previewW * zoom / 100;
