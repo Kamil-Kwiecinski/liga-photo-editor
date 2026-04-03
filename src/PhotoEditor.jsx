@@ -92,7 +92,7 @@ function rescaleBgPos(bgPos, oldZoom, newZoom, targetW, targetH, previewW, natW,
   return `${newPx.toFixed(0)}px ${newPy.toFixed(0)}px`;
 }
 
-// ── CLASSIC OVERLAYS ─────────────────────────────────────────────────────────
+// ── CLASSIC OVERLAYS (unchanged) ─────────────────────────────────────────────
 
 function PhotoOverlayPost({ s, m, showSets, selectedSponsors }) {
   return (
@@ -170,10 +170,22 @@ function PhotoOverlayStory({ s, m, showSets, selectedSponsors }) {
   );
 }
 
-// ── SPLIT PANEL OVERLAYS ─────────────────────────────────────────────────────
+// ── SPLIT PANEL OVERLAYS — SYNCED WITH n8n v6 ───────────────────────────────
 
 function SplitPanelOverlayPost({ s, m, selectedSponsors }) {
   const panelW = 0.42;
+  const numSets = m.set_scores.length;
+  // Adaptive sizes matching n8n
+  const scoreFontSize = numSets >= 5 ? 60 : 80;
+  const setFontSize = numSets >= 5 ? 18 : 22;
+  const setMarginBottom = numSets >= 5 ? 2 : 4;
+  const teamLogoSize = numSets >= 5 ? 44 : 52;
+  const sectionGap = numSets >= 5 ? 4 : 6;
+  const homeNameFs = m.team_home.length > 14 ? (numSets >= 5 ? 15 : 18) : (numSets >= 5 ? 18 : 22);
+  const awayNameFs = m.team_away.length > 14 ? (numSets >= 5 ? 15 : 18) : (numSets >= 5 ? 18 : 22);
+  const sponsorBarH = selectedSponsors.length > 0 ? 80 : 0;
+  const panelPadBottom = 28 + sponsorBarH;
+
   return (
     <div className="absolute inset-0 z-10" style={{ pointerEvents: "none" }}>
       {/* Dark left panel */}
@@ -186,65 +198,71 @@ function SplitPanelOverlayPost({ s, m, selectedSponsors }) {
       <div style={{ position: "absolute", bottom: 0, left: 0, width: `${panelW * 100}%`, height: 4 * s, background: `linear-gradient(90deg, ${m.color_away}, ${m.color_liga})` }} />
       {/* Vertical accent line */}
       <div style={{ position: "absolute", top: 0, left: `${panelW * 100}%`, width: 3 * s, height: "100%", background: `linear-gradient(180deg, ${m.color_home}, ${m.color_liga}, ${m.color_away})`, opacity: 0.5 }} />
-      {/* Panel content */}
-      <div style={{ position: "absolute", top: 0, left: 0, width: `${panelW * 100}%`, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: `${44 * s}px ${36 * s}px ${32 * s}px ${44 * s}px` }}>
-        {/* Top: Liga + Kolejka */}
-        <div>
+
+      {/* Panel with absolute positioned sections — matches n8n */}
+      <div style={{ position: "absolute", top: 0, left: 0, width: `${panelW * 100}%`, height: "100%" }}>
+
+        {/* TOP: Liga + Kolejka (pinned to top) */}
+        <div style={{ position: "absolute", top: 40 * s, left: 40 * s, right: 32 * s }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 * s }}>
-            <div style={{ width: 40 * s, height: 40 * s, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ width: 42 * s, height: 42 * s, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <span style={{ color: m.color_liga, fontSize: 9 * s, fontWeight: 700, letterSpacing: 1 }}>LIGA</span>
             </div>
-            <span style={{ color: "rgba(255,255,255,0.45)", fontSize: 15 * s, fontWeight: 500, textTransform: "uppercase", letterSpacing: 3 }}>{m.kolejka}</span>
+            <span style={{ color: "rgba(255,255,255,0.45)", fontSize: 16 * s, fontWeight: 500, textTransform: "uppercase", letterSpacing: 3 }}>{m.kolejka}</span>
           </div>
-          <div style={{ fontSize: 40 * s, fontWeight: 900, color: "rgba(255,255,255,0.12)", textTransform: "uppercase", letterSpacing: 4, lineHeight: 0.95, marginTop: 8 * s }}>
+          <div style={{ fontFamily: "Anton, sans-serif", fontSize: 44 * s, fontWeight: 400, color: "rgba(255,255,255,0.12)", textTransform: "uppercase", letterSpacing: 3, lineHeight: 0.95, marginTop: 6 * s }}>
             WYNIK<br/>MECZU
           </div>
         </div>
-        {/* Middle: Teams + Score */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 * s }}>
+
+        {/* MIDDLE: Teams + Score (centered vertically) */}
+        <div style={{ position: "absolute", top: "50%", left: 40 * s, right: 32 * s, transform: "translateY(-50%)", display: "flex", flexDirection: "column", gap: sectionGap * s }}>
           {/* Home */}
           <div style={{ display: "flex", alignItems: "center", gap: 12 * s }}>
-            <div style={{ width: 52 * s, height: 52 * s, borderRadius: "50%", border: `2px solid ${m.color_home}`, background: "rgba(255,255,255,0.04)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <span style={{ color: m.color_home, fontSize: 22 * s, fontWeight: 800 }}>{m.team_home.charAt(0)}</span>
+            <div style={{ width: teamLogoSize * s, height: teamLogoSize * s, borderRadius: "50%", border: `2px solid ${m.color_home}`, background: "rgba(255,255,255,0.04)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <span style={{ color: m.color_home, fontSize: teamLogoSize * 0.42 * s, fontWeight: 800 }}>{m.team_home.charAt(0)}</span>
             </div>
-            <span style={{ color: "#fff", fontSize: 20 * s, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>{m.team_home}</span>
+            <span style={{ color: "#fff", fontSize: homeNameFs * s, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>{m.team_home}</span>
           </div>
-          <div style={{ marginLeft: 64 * s, fontSize: 76 * s, fontWeight: 900, color: m.color_home, lineHeight: 1 }}>{m.sets_home}</div>
+          <div style={{ marginLeft: 64 * s, fontSize: scoreFontSize * s, fontWeight: 700, color: m.color_home, lineHeight: 1 }}>{m.sets_home}</div>
           <div style={{ width: 50 * s, height: 2 * s, background: "rgba(255,255,255,0.1)", marginLeft: 64 * s }} />
-          <div style={{ marginLeft: 64 * s, fontSize: 76 * s, fontWeight: 900, color: m.color_away, lineHeight: 1 }}>{m.sets_away}</div>
+          <div style={{ marginLeft: 64 * s, fontSize: scoreFontSize * s, fontWeight: 700, color: m.color_away, lineHeight: 1 }}>{m.sets_away}</div>
           {/* Away */}
           <div style={{ display: "flex", alignItems: "center", gap: 12 * s }}>
-            <div style={{ width: 52 * s, height: 52 * s, borderRadius: "50%", border: `2px solid ${m.color_away}`, background: "rgba(255,255,255,0.04)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <span style={{ color: m.color_away, fontSize: 22 * s, fontWeight: 800 }}>{m.team_away.charAt(0)}</span>
+            <div style={{ width: teamLogoSize * s, height: teamLogoSize * s, borderRadius: "50%", border: `2px solid ${m.color_away}`, background: "rgba(255,255,255,0.04)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <span style={{ color: m.color_away, fontSize: teamLogoSize * 0.42 * s, fontWeight: 800 }}>{m.team_away.charAt(0)}</span>
             </div>
-            <span style={{ color: "#fff", fontSize: 20 * s, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>{m.team_away}</span>
+            <span style={{ color: "#fff", fontSize: awayNameFs * s, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>{m.team_away}</span>
           </div>
         </div>
-        {/* Bottom: Set scores */}
-        <div style={{ marginLeft: 64 * s }}>
-          <div style={{ fontSize: 9 * s, fontWeight: 600, color: "rgba(255,255,255,0.25)", textTransform: "uppercase", letterSpacing: 2, marginBottom: 6 * s }}>Wyniki setów</div>
+
+        {/* BOTTOM: Set scores (pinned to bottom) */}
+        <div style={{ position: "absolute", bottom: panelPadBottom * s, left: 104 * s, right: 32 * s }}>
+          <div style={{ fontSize: 11 * s, fontWeight: 600, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: 2, marginBottom: 6 * s }}>Wyniki setów</div>
           {m.set_scores.map((sc, i) => {
             const homeWon = sc.home > sc.away;
             return (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 0, marginBottom: 2 * s }}>
-                <span style={{ width: 18 * s, fontSize: 9 * s, color: "rgba(255,255,255,0.2)" }}>{i + 1}</span>
-                <span style={{ fontSize: 16 * s, fontWeight: homeWon ? 700 : 400, color: homeWon ? m.color_home : "rgba(255,255,255,0.25)", width: 28 * s, textAlign: "right" }}>{sc.home}</span>
-                <span style={{ fontSize: 12 * s, color: "rgba(255,255,255,0.15)", margin: `0 ${4 * s}px` }}>–</span>
-                <span style={{ fontSize: 16 * s, fontWeight: homeWon ? 400 : 700, color: homeWon ? "rgba(255,255,255,0.25)" : m.color_away, width: 28 * s }}>{sc.away}</span>
+              <div key={i} style={{ display: "flex", alignItems: "center", marginBottom: setMarginBottom * s }}>
+                <span style={{ width: 18 * s, fontSize: 11 * s, color: "rgba(255,255,255,0.35)" }}>{i + 1}</span>
+                <span style={{ fontSize: setFontSize * s, fontWeight: homeWon ? 700 : 400, color: homeWon ? m.color_home : "rgba(255,255,255,0.5)", width: 32 * s, textAlign: "right" }}>{sc.home}</span>
+                <span style={{ fontSize: 12 * s, color: "rgba(255,255,255,0.25)", margin: `0 ${5 * s}px` }}>–</span>
+                <span style={{ fontSize: setFontSize * s, fontWeight: homeWon ? 400 : 700, color: homeWon ? "rgba(255,255,255,0.5)" : m.color_away, width: 32 * s }}>{sc.away}</span>
               </div>
             );
           })}
         </div>
       </div>
+
       {/* Watermark on photo side */}
-      <div style={{ position: "absolute", bottom: 80 * s, right: 30 * s, fontSize: 90 * s, fontWeight: 900, color: "rgba(255,255,255,0.07)", lineHeight: 1.05, textAlign: "right", textTransform: "uppercase", letterSpacing: 2 }}>
-        FINAL<br/>SCORE
+      <div style={{ position: "absolute", bottom: (80 + sponsorBarH) * s, right: 40 * s, fontFamily: "Anton, sans-serif", fontSize: 120 * s, fontWeight: 400, color: "rgba(255,255,255,0.08)", lineHeight: 1.05, textAlign: "right", textTransform: "uppercase", letterSpacing: 2 }}>
+        WYNIK<br/>MECZU
       </div>
+
       {/* Sponsors */}
       {selectedSponsors.length > 0 && (
-        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 60 * s, background: "rgba(0,0,0,0.9)", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 * s }}>
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 80 * s, background: "rgba(0,0,0,0.9)", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 * s }}>
           {selectedSponsors.map((url, i) => (
-            <img key={i} src={url} alt="" style={{ height: 30 * s, maxWidth: 90 * s, objectFit: "contain", filter: "brightness(0) invert(1)", opacity: 0.7 }} />
+            <img key={i} src={url} alt="" style={{ height: 42 * s, maxWidth: 120 * s, objectFit: "contain", filter: "brightness(0) invert(1)", opacity: 0.7 }} />
           ))}
         </div>
       )}
@@ -253,8 +271,8 @@ function SplitPanelOverlayPost({ s, m, selectedSponsors }) {
 }
 
 function SplitPanelOverlayStory({ s, m, selectedSponsors }) {
-  // Story: photo on top ~55%, dark panel on bottom ~45%
   const splitAt = 0.55;
+  const sponsorBarH = selectedSponsors.length > 0 ? 100 : 0;
   return (
     <div className="absolute inset-0 z-10" style={{ pointerEvents: "none" }}>
       {/* Dark bottom panel */}
@@ -262,47 +280,45 @@ function SplitPanelOverlayStory({ s, m, selectedSponsors }) {
       {/* Gradient fade from photo to panel */}
       <div style={{ position: "absolute", top: `${(splitAt - 0.12) * 100}%`, left: 0, width: "100%", height: "15%", background: "linear-gradient(180deg, transparent, #0a0a0a)" }} />
       {/* Horizontal accent line */}
-      <div style={{ position: "absolute", top: `${splitAt * 100}%`, left: 0, width: "100%", height: 3 * s, background: `linear-gradient(90deg, ${m.color_home}, ${m.color_liga}, ${m.color_away})`, opacity: 0.5 }} />
+      <div style={{ position: "absolute", top: `${splitAt * 100}%`, left: 0, width: "100%", height: 4 * s, background: `linear-gradient(90deg, ${m.color_home}, ${m.color_liga}, ${m.color_away})`, opacity: 0.5 }} />
       {/* Liga badge on photo */}
-      <div style={{ position: "absolute", top: 30 * s, left: 30 * s, display: "flex", alignItems: "center", gap: 10 * s }}>
-        <div style={{ width: 36 * s, height: 36 * s, borderRadius: "50%", background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ position: "absolute", top: 40 * s, left: 40 * s, display: "flex", alignItems: "center", gap: 16 * s }}>
+        <div style={{ width: 48 * s, height: 48 * s, borderRadius: "50%", background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <span style={{ color: "#fff", fontSize: 8 * s, fontWeight: 700 }}>LIGA</span>
         </div>
-        <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 * s, fontWeight: 600, textTransform: "uppercase", letterSpacing: 2 }}>{m.kolejka}</span>
+        <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 22 * s, fontWeight: 600, textTransform: "uppercase", letterSpacing: 3 }}>{m.kolejka}</span>
       </div>
       {/* Panel content */}
-      <div style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: `${(1 - splitAt) * 100}%`, display: "flex", flexDirection: "column", justifyContent: "center", padding: `${20 * s}px ${36 * s}px` }}>
+      <div style={{ position: "absolute", bottom: sponsorBarH * s, left: 0, width: "100%", height: `${(1 - splitAt) * 100}%`, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 36 * s }}>
         {/* Teams + Score row */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20 * s }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 36 * s }}>
           {/* Home */}
           <div style={{ textAlign: "center" }}>
-            <div style={{ width: 56 * s, height: 56 * s, borderRadius: "50%", border: `2px solid ${m.color_home}`, background: "rgba(255,255,255,0.04)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto" }}>
-              <span style={{ color: m.color_home, fontSize: 24 * s, fontWeight: 800 }}>{m.team_home.charAt(0)}</span>
+            <div style={{ width: 130 * s, height: 130 * s, borderRadius: "50%", border: `4px solid ${m.color_home}`, background: "rgba(255,255,255,0.04)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto" }}>
+              <span style={{ color: m.color_home, fontSize: 52 * s, fontWeight: 800 }}>{m.team_home.charAt(0)}</span>
             </div>
-            <div style={{ color: "#fff", fontSize: 13 * s, fontWeight: 700, marginTop: 6 * s, textTransform: "uppercase" }}>{m.team_home}</div>
+            <div style={{ color: "#fff", fontSize: 30 * s, fontWeight: 700, marginTop: 14 * s, textTransform: "uppercase" }}>{m.team_home}</div>
           </div>
           {/* Score */}
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 72 * s, fontWeight: 900, color: "#fff", lineHeight: 1, letterSpacing: 4 * s }}>{m.sets_home} : {m.sets_away}</div>
-          </div>
+          <div style={{ fontSize: 150 * s, fontWeight: 700, color: "#fff", lineHeight: 1, letterSpacing: 6 * s }}>{m.sets_home} : {m.sets_away}</div>
           {/* Away */}
           <div style={{ textAlign: "center" }}>
-            <div style={{ width: 56 * s, height: 56 * s, borderRadius: "50%", border: `2px solid ${m.color_away}`, background: "rgba(255,255,255,0.04)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto" }}>
-              <span style={{ color: m.color_away, fontSize: 24 * s, fontWeight: 800 }}>{m.team_away.charAt(0)}</span>
+            <div style={{ width: 130 * s, height: 130 * s, borderRadius: "50%", border: `4px solid ${m.color_away}`, background: "rgba(255,255,255,0.04)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto" }}>
+              <span style={{ color: m.color_away, fontSize: 52 * s, fontWeight: 800 }}>{m.team_away.charAt(0)}</span>
             </div>
-            <div style={{ color: "#fff", fontSize: 13 * s, fontWeight: 700, marginTop: 6 * s, textTransform: "uppercase" }}>{m.team_away}</div>
+            <div style={{ color: "#fff", fontSize: 30 * s, fontWeight: 700, marginTop: 14 * s, textTransform: "uppercase" }}>{m.team_away}</div>
           </div>
         </div>
         {/* Set scores inline */}
-        <div style={{ display: "flex", justifyContent: "center", gap: 6 * s, marginTop: 12 * s }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 * s }}>
           {m.set_scores.map((sc, i) => {
             const homeWon = sc.home > sc.away;
             return (
               <div key={i} style={{ display: "flex", alignItems: "center" }}>
-                {i > 0 && <span style={{ color: "rgba(255,255,255,0.15)", margin: `0 ${4 * s}px`, fontSize: 12 * s }}>|</span>}
-                <span style={{ fontSize: 14 * s, fontWeight: homeWon ? 700 : 400, color: homeWon ? m.color_home : "rgba(255,255,255,0.3)" }}>{sc.home}</span>
-                <span style={{ fontSize: 10 * s, color: "rgba(255,255,255,0.2)", margin: `0 ${2 * s}px` }}>:</span>
-                <span style={{ fontSize: 14 * s, fontWeight: homeWon ? 400 : 700, color: homeWon ? "rgba(255,255,255,0.3)" : m.color_away }}>{sc.away}</span>
+                {i > 0 && <span style={{ color: "rgba(255,255,255,0.25)", margin: `0 ${6 * s}px`, fontSize: 28 * s }}>|</span>}
+                <span style={{ fontSize: 44 * s, fontWeight: homeWon ? 700 : 400, color: homeWon ? m.color_home : "rgba(255,255,255,0.5)" }}>{sc.home}</span>
+                <span style={{ fontSize: 28 * s, color: "rgba(255,255,255,0.3)", margin: `0 ${2 * s}px` }}>:</span>
+                <span style={{ fontSize: 44 * s, fontWeight: homeWon ? 400 : 700, color: homeWon ? "rgba(255,255,255,0.5)" : m.color_away }}>{sc.away}</span>
               </div>
             );
           })}
@@ -310,9 +326,9 @@ function SplitPanelOverlayStory({ s, m, selectedSponsors }) {
       </div>
       {/* Sponsors */}
       {selectedSponsors.length > 0 && (
-        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 50 * s, background: "rgba(0,0,0,0.9)", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 * s }}>
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 100 * s, background: "rgba(0,0,0,0.9)", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 * s }}>
           {selectedSponsors.map((url, i) => (
-            <img key={i} src={url} alt="" style={{ height: 28 * s, maxWidth: 80 * s, objectFit: "contain", filter: "brightness(0) invert(1)", opacity: 0.7 }} />
+            <img key={i} src={url} alt="" style={{ height: 52 * s, maxWidth: 120 * s, objectFit: "contain", filter: "brightness(0) invert(1)", opacity: 0.7 }} />
           ))}
         </div>
       )}
@@ -320,7 +336,7 @@ function SplitPanelOverlayStory({ s, m, selectedSponsors }) {
   );
 }
 
-// ── NO-PHOTO VARIANTS ────────────────────────────────────────────────────────
+// ── NO-PHOTO VARIANTS (unchanged) ────────────────────────────────────────────
 
 function NoPhotoPost({ s, m }) {
   return (
@@ -367,7 +383,7 @@ function NoPhotoStory({ s, m }) {
   );
 }
 
-// ── SHARED COMPONENTS ────────────────────────────────────────────────────────
+// ── SHARED COMPONENTS (unchanged) ────────────────────────────────────────────
 
 function SetScoresColored({ s, m, fontSize }) {
   return (
@@ -504,7 +520,6 @@ function PreviewPanel({ label, targetW, targetH, image, imageNat, zoom, bgPos, s
 
   const onUp = () => { setDragging(false); setDragStart(null); };
 
-  // Choose overlay based on style
   function renderOverlay() {
     if (!image) return isStory ? <NoPhotoStory s={s} m={m} /> : <NoPhotoPost s={s} m={m} />;
     if (graphicStyle === "split_panel") {
@@ -512,13 +527,11 @@ function PreviewPanel({ label, targetW, targetH, image, imageNat, zoom, bgPos, s
         ? <SplitPanelOverlayStory s={s} m={m} selectedSponsors={selectedSponsors} />
         : <SplitPanelOverlayPost s={s} m={m} selectedSponsors={selectedSponsors} />;
     }
-    // Classic
     return isStory
       ? <PhotoOverlayStory s={s} m={m} showSets={showSets} selectedSponsors={selectedSponsors} />
       : <PhotoOverlayPost s={s} m={m} showSets={showSets} selectedSponsors={selectedSponsors} />;
   }
 
-  // Split panel: no gradient overlay on the photo side (panel covers left)
   const showDefaultGrad = image && graphicStyle !== "split_panel";
 
   return (
@@ -569,7 +582,7 @@ function PreviewPanel({ label, targetW, targetH, image, imageNat, zoom, bgPos, s
   );
 }
 
-// ── SPONSORS SELECTOR ────────────────────────────────────────────────────────
+// ── SPONSORS SELECTOR (unchanged) ────────────────────────────────────────────
 
 function SponsorsSelector({ sponsorzy, selected, setSelected }) {
   if (sponsorzy.length === 0) return null;
@@ -679,11 +692,9 @@ export default function PhotoEditor() {
         </p>
       </div>
 
-      {/* Style selector */}
       <StyleSelector value={graphicStyle} onChange={setGraphicStyle} />
 
       <div className="flex gap-6 flex-wrap justify-center items-start">
-        {/* POST */}
         <div className="flex flex-col items-center gap-2">
           <PreviewPanel
             label="Post 1080×1080" targetW={1080} targetH={1080}
@@ -711,7 +722,6 @@ export default function PhotoEditor() {
           <SponsorsSelector sponsorzy={m.sponsorzy} selected={postSponsors} setSelected={setPostSponsors} />
         </div>
 
-        {/* STORY */}
         <div className="flex flex-col items-center gap-2">
           <PreviewPanel
             label="Story 1080×1920" targetW={1080} targetH={1920}
