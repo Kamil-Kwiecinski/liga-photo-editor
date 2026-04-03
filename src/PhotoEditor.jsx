@@ -2,6 +2,11 @@ import { useState, useCallback, useRef } from "react";
 
 const N8N_WEBHOOK_URL = "https://primary-production-9c937.up.railway.app/webhook/photo-editor";
 
+const STYLES = [
+  { id: "classic", label: "Klasyczny" },
+  { id: "split_panel", label: "Split Panel" },
+];
+
 function getMatchFromURL() {
   const p = new URLSearchParams(window.location.search);
   if (!p.get("match_id")) {
@@ -38,61 +43,30 @@ function getMatchFromURL() {
   };
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-// KLUCZOWA LOGIKA: Obliczenia rozmiaru obrazka przy background-size: X%
-//
-// CSS background-size: 150% oznacza: szerokość obrazka = 150% szerokości kontenera.
-// Wysokość obrazka jest proporcjonalna do naturalnych wymiarów zdjęcia.
-//
-// Przykład: zdjęcie 4000x2000 (landscape 2:1) w kontenerze 1080x1080 (1:1):
-//   background-size: 150% → imgW = 1080 * 1.5 = 1620px
-//   imgH = 1620 * (2000/4000) = 810px  ← MNIEJSZE niż kontener!
-//   Zakres Y = 810 - 1080 = -270px → obraz nie wypełnia kontenera w pionie
-//
-// Dlatego MUSIMY znać naturalne wymiary zdjęcia.
-// ────────────────────────────────────────────────────────────────────────────
+// ── CROP MATH ────────────────────────────────────────────────────────────────
 
-// Oblicz wymiary obrazka renderowanego w kontenerze przy danym zoom
-// containerW/H = wymiary kontenera (podglądu lub docelowego)
-// natW/natH = naturalne wymiary zdjęcia
-// zoom = np. 150 (procent)
 function getRenderedImageSize(containerW, containerH, natW, natH, zoom) {
   const imgW = containerW * (zoom / 100);
   const imgH = imgW * (natH / natW);
   return { imgW, imgH };
 }
 
-// Przelicz drag offset (px w podglądzie) na background-position %
-// Uniwersalne — działa dla dowolnych proporcji zdjęcia i kontenera
 function pxToPercent(bgPos, zoom, targetW, targetH, previewW, natW, natH) {
   const parts = bgPos.replace(/px/g, '').split(' ');
   const px = parseFloat(parts[0]) || 0;
   const py = parseFloat(parts[1]) || 0;
-
-  // Wymiary podglądu
   const scale = previewW / targetW;
   const previewH = targetH * scale;
-
-  // Rzeczywiste wymiary obrazka w podglądzie
   const { imgW, imgH } = getRenderedImageSize(previewW, previewH, natW, natH, zoom);
-
-  // Zakres przesunięcia w px
   const maxX = imgW - previewW;
   const maxY = imgH - previewH;
-
-  // Przelicz na % — bez clampu, żeby obraz mógł wychodzić poza krawędzie
   const xPct = maxX > 0 ? (-px / maxX) * 100 : 50;
   const yPct = maxY > 0 ? (-py / maxY) * 100 : 50;
-
   return `${xPct.toFixed(1)}% ${yPct.toFixed(1)}%`;
 }
 
-// Oblicz startowy drag offset (px) odpowiadający bg-position 50% 50%
 function initialBgPos(zoom, targetW, targetH, previewW, natW, natH) {
-  if (!natW || !natH) {
-    // Fallback jeśli nie mamy jeszcze wymiarów (nie powinno się zdarzyć)
-    return "0px 0px";
-  }
+  if (!natW || !natH) return "0px 0px";
   const scale = previewW / targetW;
   const previewH = targetH * scale;
   const { imgW, imgH } = getRenderedImageSize(previewW, previewH, natW, natH, zoom);
@@ -101,30 +75,24 @@ function initialBgPos(zoom, targetW, targetH, previewW, natW, natH) {
   return `${(-(maxX * 0.5)).toFixed(0)}px ${(-(maxY * 0.5)).toFixed(0)}px`;
 }
 
-// Przelicz bgPos ze starego zoomu na nowy zachowując proporcję kadru
 function rescaleBgPos(bgPos, oldZoom, newZoom, targetW, targetH, previewW, natW, natH) {
   const parts = bgPos.replace(/px/g, '').split(' ');
   const oldPx = parseFloat(parts[0]) || 0;
   const oldPy = parseFloat(parts[1]) || 0;
-
   const scale = previewW / targetW;
   const previewH = targetH * scale;
-
   const oldImg = getRenderedImageSize(previewW, previewH, natW, natH, oldZoom);
   const newImg = getRenderedImageSize(previewW, previewH, natW, natH, newZoom);
-
   const oldMaxX = oldImg.imgW - previewW;
   const oldMaxY = oldImg.imgH - previewH;
   const newMaxX = newImg.imgW - previewW;
   const newMaxY = newImg.imgH - previewH;
-
   const newPx = oldMaxX > 0 ? (oldPx / oldMaxX) * newMaxX : -(newMaxX * 0.5);
   const newPy = oldMaxY > 0 ? (oldPy / oldMaxY) * newMaxY : -(newMaxY * 0.5);
-
   return `${newPx.toFixed(0)}px ${newPy.toFixed(0)}px`;
 }
 
-// ========== OVERLAYS ==========
+// ── CLASSIC OVERLAYS ─────────────────────────────────────────────────────────
 
 function PhotoOverlayPost({ s, m, showSets, selectedSponsors }) {
   return (
@@ -202,6 +170,158 @@ function PhotoOverlayStory({ s, m, showSets, selectedSponsors }) {
   );
 }
 
+// ── SPLIT PANEL OVERLAYS ─────────────────────────────────────────────────────
+
+function SplitPanelOverlayPost({ s, m, selectedSponsors }) {
+  const panelW = 0.42;
+  return (
+    <div className="absolute inset-0 z-10" style={{ pointerEvents: "none" }}>
+      {/* Dark left panel */}
+      <div style={{ position: "absolute", top: 0, left: 0, width: `${panelW * 100}%`, height: "100%", background: "linear-gradient(180deg, #111 0%, #0a0a0a 100%)" }} />
+      {/* Gradient fade from panel into photo */}
+      <div style={{ position: "absolute", top: 0, left: `${panelW * 100}%`, width: "20%", height: "100%", background: "linear-gradient(90deg, #0a0a0a, transparent)" }} />
+      {/* Top accent */}
+      <div style={{ position: "absolute", top: 0, left: 0, width: `${panelW * 100}%`, height: 4 * s, background: `linear-gradient(90deg, ${m.color_home}, ${m.color_liga})` }} />
+      {/* Bottom accent */}
+      <div style={{ position: "absolute", bottom: 0, left: 0, width: `${panelW * 100}%`, height: 4 * s, background: `linear-gradient(90deg, ${m.color_away}, ${m.color_liga})` }} />
+      {/* Vertical accent line */}
+      <div style={{ position: "absolute", top: 0, left: `${panelW * 100}%`, width: 3 * s, height: "100%", background: `linear-gradient(180deg, ${m.color_home}, ${m.color_liga}, ${m.color_away})`, opacity: 0.5 }} />
+      {/* Panel content */}
+      <div style={{ position: "absolute", top: 0, left: 0, width: `${panelW * 100}%`, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: `${44 * s}px ${36 * s}px ${32 * s}px ${44 * s}px` }}>
+        {/* Top: Liga + Kolejka */}
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 * s }}>
+            <div style={{ width: 40 * s, height: 40 * s, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ color: m.color_liga, fontSize: 9 * s, fontWeight: 700, letterSpacing: 1 }}>LIGA</span>
+            </div>
+            <span style={{ color: "rgba(255,255,255,0.45)", fontSize: 15 * s, fontWeight: 500, textTransform: "uppercase", letterSpacing: 3 }}>{m.kolejka}</span>
+          </div>
+          <div style={{ fontSize: 40 * s, fontWeight: 900, color: "rgba(255,255,255,0.12)", textTransform: "uppercase", letterSpacing: 4, lineHeight: 0.95, marginTop: 8 * s }}>
+            WYNIK<br/>MECZU
+          </div>
+        </div>
+        {/* Middle: Teams + Score */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 * s }}>
+          {/* Home */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12 * s }}>
+            <div style={{ width: 52 * s, height: 52 * s, borderRadius: "50%", border: `2px solid ${m.color_home}`, background: "rgba(255,255,255,0.04)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <span style={{ color: m.color_home, fontSize: 22 * s, fontWeight: 800 }}>{m.team_home.charAt(0)}</span>
+            </div>
+            <span style={{ color: "#fff", fontSize: 20 * s, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>{m.team_home}</span>
+          </div>
+          <div style={{ marginLeft: 64 * s, fontSize: 76 * s, fontWeight: 900, color: m.color_home, lineHeight: 1 }}>{m.sets_home}</div>
+          <div style={{ width: 50 * s, height: 2 * s, background: "rgba(255,255,255,0.1)", marginLeft: 64 * s }} />
+          <div style={{ marginLeft: 64 * s, fontSize: 76 * s, fontWeight: 900, color: m.color_away, lineHeight: 1 }}>{m.sets_away}</div>
+          {/* Away */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12 * s }}>
+            <div style={{ width: 52 * s, height: 52 * s, borderRadius: "50%", border: `2px solid ${m.color_away}`, background: "rgba(255,255,255,0.04)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <span style={{ color: m.color_away, fontSize: 22 * s, fontWeight: 800 }}>{m.team_away.charAt(0)}</span>
+            </div>
+            <span style={{ color: "#fff", fontSize: 20 * s, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>{m.team_away}</span>
+          </div>
+        </div>
+        {/* Bottom: Set scores */}
+        <div style={{ marginLeft: 64 * s }}>
+          <div style={{ fontSize: 9 * s, fontWeight: 600, color: "rgba(255,255,255,0.25)", textTransform: "uppercase", letterSpacing: 2, marginBottom: 6 * s }}>Wyniki setów</div>
+          {m.set_scores.map((sc, i) => {
+            const homeWon = sc.home > sc.away;
+            return (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 0, marginBottom: 2 * s }}>
+                <span style={{ width: 18 * s, fontSize: 9 * s, color: "rgba(255,255,255,0.2)" }}>{i + 1}</span>
+                <span style={{ fontSize: 16 * s, fontWeight: homeWon ? 700 : 400, color: homeWon ? m.color_home : "rgba(255,255,255,0.25)", width: 28 * s, textAlign: "right" }}>{sc.home}</span>
+                <span style={{ fontSize: 12 * s, color: "rgba(255,255,255,0.15)", margin: `0 ${4 * s}px` }}>–</span>
+                <span style={{ fontSize: 16 * s, fontWeight: homeWon ? 400 : 700, color: homeWon ? "rgba(255,255,255,0.25)" : m.color_away, width: 28 * s }}>{sc.away}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      {/* Watermark on photo side */}
+      <div style={{ position: "absolute", bottom: 80 * s, right: 30 * s, fontSize: 90 * s, fontWeight: 900, color: "rgba(255,255,255,0.07)", lineHeight: 1.05, textAlign: "right", textTransform: "uppercase", letterSpacing: 2 }}>
+        FINAL<br/>SCORE
+      </div>
+      {/* Sponsors */}
+      {selectedSponsors.length > 0 && (
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 60 * s, background: "rgba(0,0,0,0.9)", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 * s }}>
+          {selectedSponsors.map((url, i) => (
+            <img key={i} src={url} alt="" style={{ height: 30 * s, maxWidth: 90 * s, objectFit: "contain", filter: "brightness(0) invert(1)", opacity: 0.7 }} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SplitPanelOverlayStory({ s, m, selectedSponsors }) {
+  // Story: photo on top ~55%, dark panel on bottom ~45%
+  const splitAt = 0.55;
+  return (
+    <div className="absolute inset-0 z-10" style={{ pointerEvents: "none" }}>
+      {/* Dark bottom panel */}
+      <div style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: `${(1 - splitAt) * 100}%`, background: "linear-gradient(180deg, #111 0%, #0a0a0a 100%)" }} />
+      {/* Gradient fade from photo to panel */}
+      <div style={{ position: "absolute", top: `${(splitAt - 0.12) * 100}%`, left: 0, width: "100%", height: "15%", background: "linear-gradient(180deg, transparent, #0a0a0a)" }} />
+      {/* Horizontal accent line */}
+      <div style={{ position: "absolute", top: `${splitAt * 100}%`, left: 0, width: "100%", height: 3 * s, background: `linear-gradient(90deg, ${m.color_home}, ${m.color_liga}, ${m.color_away})`, opacity: 0.5 }} />
+      {/* Liga badge on photo */}
+      <div style={{ position: "absolute", top: 30 * s, left: 30 * s, display: "flex", alignItems: "center", gap: 10 * s }}>
+        <div style={{ width: 36 * s, height: 36 * s, borderRadius: "50%", background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <span style={{ color: "#fff", fontSize: 8 * s, fontWeight: 700 }}>LIGA</span>
+        </div>
+        <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 * s, fontWeight: 600, textTransform: "uppercase", letterSpacing: 2 }}>{m.kolejka}</span>
+      </div>
+      {/* Panel content */}
+      <div style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: `${(1 - splitAt) * 100}%`, display: "flex", flexDirection: "column", justifyContent: "center", padding: `${20 * s}px ${36 * s}px` }}>
+        {/* Teams + Score row */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20 * s }}>
+          {/* Home */}
+          <div style={{ textAlign: "center" }}>
+            <div style={{ width: 56 * s, height: 56 * s, borderRadius: "50%", border: `2px solid ${m.color_home}`, background: "rgba(255,255,255,0.04)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto" }}>
+              <span style={{ color: m.color_home, fontSize: 24 * s, fontWeight: 800 }}>{m.team_home.charAt(0)}</span>
+            </div>
+            <div style={{ color: "#fff", fontSize: 13 * s, fontWeight: 700, marginTop: 6 * s, textTransform: "uppercase" }}>{m.team_home}</div>
+          </div>
+          {/* Score */}
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 72 * s, fontWeight: 900, color: "#fff", lineHeight: 1, letterSpacing: 4 * s }}>{m.sets_home} : {m.sets_away}</div>
+          </div>
+          {/* Away */}
+          <div style={{ textAlign: "center" }}>
+            <div style={{ width: 56 * s, height: 56 * s, borderRadius: "50%", border: `2px solid ${m.color_away}`, background: "rgba(255,255,255,0.04)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto" }}>
+              <span style={{ color: m.color_away, fontSize: 24 * s, fontWeight: 800 }}>{m.team_away.charAt(0)}</span>
+            </div>
+            <div style={{ color: "#fff", fontSize: 13 * s, fontWeight: 700, marginTop: 6 * s, textTransform: "uppercase" }}>{m.team_away}</div>
+          </div>
+        </div>
+        {/* Set scores inline */}
+        <div style={{ display: "flex", justifyContent: "center", gap: 6 * s, marginTop: 12 * s }}>
+          {m.set_scores.map((sc, i) => {
+            const homeWon = sc.home > sc.away;
+            return (
+              <div key={i} style={{ display: "flex", alignItems: "center" }}>
+                {i > 0 && <span style={{ color: "rgba(255,255,255,0.15)", margin: `0 ${4 * s}px`, fontSize: 12 * s }}>|</span>}
+                <span style={{ fontSize: 14 * s, fontWeight: homeWon ? 700 : 400, color: homeWon ? m.color_home : "rgba(255,255,255,0.3)" }}>{sc.home}</span>
+                <span style={{ fontSize: 10 * s, color: "rgba(255,255,255,0.2)", margin: `0 ${2 * s}px` }}>:</span>
+                <span style={{ fontSize: 14 * s, fontWeight: homeWon ? 400 : 700, color: homeWon ? "rgba(255,255,255,0.3)" : m.color_away }}>{sc.away}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      {/* Sponsors */}
+      {selectedSponsors.length > 0 && (
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 50 * s, background: "rgba(0,0,0,0.9)", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 * s }}>
+          {selectedSponsors.map((url, i) => (
+            <img key={i} src={url} alt="" style={{ height: 28 * s, maxWidth: 80 * s, objectFit: "contain", filter: "brightness(0) invert(1)", opacity: 0.7 }} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── NO-PHOTO VARIANTS ────────────────────────────────────────────────────────
+
 function NoPhotoPost({ s, m }) {
   return (
     <div className="absolute inset-0" style={{ background: `linear-gradient(180deg, ${m.color_liga} 0%, #001533 100%)` }}>
@@ -246,6 +366,8 @@ function NoPhotoStory({ s, m }) {
     </div>
   );
 }
+
+// ── SHARED COMPONENTS ────────────────────────────────────────────────────────
 
 function SetScoresColored({ s, m, fontSize }) {
   return (
@@ -330,9 +452,29 @@ function TeamCircle({ s, m, team, size, fontSize, light }) {
   );
 }
 
-// ========== PREVIEW PANEL ==========
+// ── STYLE SELECTOR ───────────────────────────────────────────────────────────
 
-function PreviewPanel({ label, targetW, targetH, image, imageNat, zoom, bgPos, setBgPos, m, maxPreviewW, showSets, selectedSponsors, onUpload, onRemove, onZoomChange }) {
+function StyleSelector({ value, onChange }) {
+  return (
+    <div style={{ display: "flex", gap: 6, background: "rgba(0,0,0,0.1)", borderRadius: 8, padding: 3 }}>
+      {STYLES.map(st => (
+        <button key={st.id} onClick={() => onChange(st.id)}
+          style={{
+            fontSize: 11, fontWeight: value === st.id ? 600 : 400, padding: "5px 14px", borderRadius: 6, border: "none", cursor: "pointer",
+            background: value === st.id ? "#2563eb" : "transparent",
+            color: value === st.id ? "#fff" : "var(--color-text-secondary, #888)",
+            transition: "all 0.15s",
+          }}>
+          {st.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ── PREVIEW PANEL ────────────────────────────────────────────────────────────
+
+function PreviewPanel({ label, targetW, targetH, image, imageNat, zoom, bgPos, setBgPos, m, maxPreviewW, showSets, selectedSponsors, onUpload, onRemove, onZoomChange, graphicStyle }) {
   const containerRef = useRef(null);
   const [dragging, setDragging] = useState(false);
   const [dragStart, setDragStart] = useState(null);
@@ -357,12 +499,27 @@ function PreviewPanel({ label, targetW, targetH, image, imageNat, zoom, bgPos, s
     if (!dragging || !dragStart) return;
     const dx = cx - dragStart.cx;
     const dy = cy - dragStart.cy;
-    const newX = dragStart.px + dx;
-    const newY = dragStart.py + dy;
-    setBgPos(`${newX.toFixed(0)}px ${newY.toFixed(0)}px`);
+    setBgPos(`${(dragStart.px + dx).toFixed(0)}px ${(dragStart.py + dy).toFixed(0)}px`);
   };
 
   const onUp = () => { setDragging(false); setDragStart(null); };
+
+  // Choose overlay based on style
+  function renderOverlay() {
+    if (!image) return isStory ? <NoPhotoStory s={s} m={m} /> : <NoPhotoPost s={s} m={m} />;
+    if (graphicStyle === "split_panel") {
+      return isStory
+        ? <SplitPanelOverlayStory s={s} m={m} selectedSponsors={selectedSponsors} />
+        : <SplitPanelOverlayPost s={s} m={m} selectedSponsors={selectedSponsors} />;
+    }
+    // Classic
+    return isStory
+      ? <PhotoOverlayStory s={s} m={m} showSets={showSets} selectedSponsors={selectedSponsors} />
+      : <PhotoOverlayPost s={s} m={m} showSets={showSets} selectedSponsors={selectedSponsors} />;
+  }
+
+  // Split panel: no gradient overlay on the photo side (panel covers left)
+  const showDefaultGrad = image && graphicStyle !== "split_panel";
 
   return (
     <div className="flex flex-col items-center gap-1">
@@ -400,13 +557,11 @@ function PreviewPanel({ label, targetW, targetH, image, imageNat, zoom, bgPos, s
           <>
             <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${image})`, backgroundSize: "cover", backgroundPosition: "center center", filter: "blur(8px) brightness(0.45) saturate(1.3)", transform: "scale(1.12)" }} />
             <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${image})`, backgroundSize: `${zoom}%`, backgroundPosition: bgPos, backgroundRepeat: "no-repeat" }} />
-            <div className="absolute inset-0" style={{ background: grad, pointerEvents: "none" }} />
-            {isStory
-              ? <PhotoOverlayStory s={s} m={m} showSets={showSets} selectedSponsors={selectedSponsors} />
-              : <PhotoOverlayPost s={s} m={m} showSets={showSets} selectedSponsors={selectedSponsors} />}
+            {showDefaultGrad && <div className="absolute inset-0" style={{ background: grad, pointerEvents: "none" }} />}
+            {renderOverlay()}
           </>
         ) : (
-          isStory ? <NoPhotoStory s={s} m={m} /> : <NoPhotoPost s={s} m={m} />
+          renderOverlay()
         )}
       </div>
       {image && <p style={{ fontSize: 10, color: "#999", marginTop: 2 }}>Przeciągnij żeby zmienić kadr</p>}
@@ -414,7 +569,7 @@ function PreviewPanel({ label, targetW, targetH, image, imageNat, zoom, bgPos, s
   );
 }
 
-// ========== SPONSORS SELECTOR ==========
+// ── SPONSORS SELECTOR ────────────────────────────────────────────────────────
 
 function SponsorsSelector({ sponsorzy, selected, setSelected }) {
   if (sponsorzy.length === 0) return null;
@@ -423,9 +578,7 @@ function SponsorsSelector({ sponsorzy, selected, setSelected }) {
   };
   return (
     <div style={{ background: "rgba(0,0,0,0.15)", borderRadius: 10, padding: "10px 14px" }}>
-      <p style={{ fontSize: 11, color: "var(--color-text-secondary, #888)", marginBottom: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>
-        Sponsorzy na grafice
-      </p>
+      <p style={{ fontSize: 11, color: "var(--color-text-secondary, #888)", marginBottom: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>Sponsorzy na grafice</p>
       <div className="flex flex-wrap gap-2">
         {sponsorzy.map((url, i) => {
           const isSelected = selected.includes(url);
@@ -445,21 +598,21 @@ function SponsorsSelector({ sponsorzy, selected, setSelected }) {
   );
 }
 
-// ========== MAIN ==========
+// ── MAIN ─────────────────────────────────────────────────────────────────────
 
 export default function PhotoEditor() {
   const m = getMatchFromURL();
   const isDev = m.match_id === "DEV";
 
-  // Post state
+  const [graphicStyle, setGraphicStyle] = useState("classic");
+
   const [postImage, setPostImage] = useState(null);
-  const [postImageNat, setPostImageNat] = useState({ w: 0, h: 0 }); // naturalne wymiary
+  const [postImageNat, setPostImageNat] = useState({ w: 0, h: 0 });
   const [postZoom, setPostZoom] = useState(150);
   const [postBgPos, setPostBgPos] = useState("0px 0px");
   const [postShowSets, setPostShowSets] = useState(false);
   const [postSponsors, setPostSponsors] = useState([]);
 
-  // Story state
   const [storyImage, setStoryImage] = useState(null);
   const [storyImageNat, setStoryImageNat] = useState({ w: 0, h: 0 });
   const [storyZoom, setStoryZoom] = useState(150);
@@ -469,7 +622,6 @@ export default function PhotoEditor() {
 
   const [status, setStatus] = useState(null);
 
-  // Wczytaj zdjęcie i odczytaj naturalne wymiary
   const loadImage = useCallback((onLoaded, targetW, targetH, previewW) => (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -500,6 +652,7 @@ export default function PhotoEditor() {
         photo_zoom: `${postZoom}%`,
         show_sets: postShowSets,
         sponsorzy: postSponsors,
+        style: graphicStyle,
       } : null,
       story: storyImage ? {
         photo_base64: storyImage,
@@ -507,6 +660,7 @@ export default function PhotoEditor() {
         photo_zoom: `${storyZoom}%`,
         show_sets: storyShowSets,
         sponsorzy: storySponsors,
+        style: graphicStyle,
       } : null,
     };
     try {
@@ -525,6 +679,9 @@ export default function PhotoEditor() {
         </p>
       </div>
 
+      {/* Style selector */}
+      <StyleSelector value={graphicStyle} onChange={setGraphicStyle} />
+
       <div className="flex gap-6 flex-wrap justify-center items-start">
         {/* POST */}
         <div className="flex flex-col items-center gap-2">
@@ -541,13 +698,16 @@ export default function PhotoEditor() {
               setPostBgPos(prev => rescaleBgPos(prev, postZoom, z, 1080, 1080, 340, postImageNat.w, postImageNat.h));
               setPostZoom(z);
             }}
+            graphicStyle={graphicStyle}
           />
-          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", userSelect: "none" }}>
-            <div onClick={() => setPostShowSets(v => !v)} style={{ width: 36, height: 20, borderRadius: 10, background: postShowSets ? "#2563eb" : "#374151", position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
-              <div style={{ position: "absolute", top: 2, left: postShowSets ? 18 : 2, width: 16, height: 16, borderRadius: "50%", background: "#fff", transition: "left 0.2s" }} />
-            </div>
-            <span style={{ fontSize: 11, color: "var(--color-text-secondary, #888)" }}>Sety</span>
-          </label>
+          {graphicStyle === "classic" && (
+            <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", userSelect: "none" }}>
+              <div onClick={() => setPostShowSets(v => !v)} style={{ width: 36, height: 20, borderRadius: 10, background: postShowSets ? "#2563eb" : "#374151", position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
+                <div style={{ position: "absolute", top: 2, left: postShowSets ? 18 : 2, width: 16, height: 16, borderRadius: "50%", background: "#fff", transition: "left 0.2s" }} />
+              </div>
+              <span style={{ fontSize: 11, color: "var(--color-text-secondary, #888)" }}>Sety</span>
+            </label>
+          )}
           <SponsorsSelector sponsorzy={m.sponsorzy} selected={postSponsors} setSelected={setPostSponsors} />
         </div>
 
@@ -566,13 +726,16 @@ export default function PhotoEditor() {
               setStoryBgPos(prev => rescaleBgPos(prev, storyZoom, z, 1080, 1920, 190, storyImageNat.w, storyImageNat.h));
               setStoryZoom(z);
             }}
+            graphicStyle={graphicStyle}
           />
-          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", userSelect: "none" }}>
-            <div onClick={() => setStoryShowSets(v => !v)} style={{ width: 36, height: 20, borderRadius: 10, background: storyShowSets ? "#2563eb" : "#374151", position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
-              <div style={{ position: "absolute", top: 2, left: storyShowSets ? 18 : 2, width: 16, height: 16, borderRadius: "50%", background: "#fff", transition: "left 0.2s" }} />
-            </div>
-            <span style={{ fontSize: 11, color: "var(--color-text-secondary, #888)" }}>Sety</span>
-          </label>
+          {graphicStyle === "classic" && (
+            <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", userSelect: "none" }}>
+              <div onClick={() => setStoryShowSets(v => !v)} style={{ width: 36, height: 20, borderRadius: 10, background: storyShowSets ? "#2563eb" : "#374151", position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
+                <div style={{ position: "absolute", top: 2, left: storyShowSets ? 18 : 2, width: 16, height: 16, borderRadius: "50%", background: "#fff", transition: "left 0.2s" }} />
+              </div>
+              <span style={{ fontSize: 11, color: "var(--color-text-secondary, #888)" }}>Sety</span>
+            </label>
+          )}
           <SponsorsSelector sponsorzy={m.sponsorzy} selected={storySponsors} setSelected={setStorySponsors} />
         </div>
       </div>
