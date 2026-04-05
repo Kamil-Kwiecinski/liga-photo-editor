@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lubańska Liga Siatkówki — Narzędzia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Inter, sans-serif; background: linear-gradient(180deg, #0a1628 0%, #0d1117 100%); color: #fff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 40px 20px; }
+    .logo { width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.9); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+    .logo span { color: #004aad; font-family: Oswald, sans-serif; font-size: 14px; font-weight: 700; }
+    h1 { font-family: Oswald, sans-serif; font-size: 28px; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 8px; text-align: center; }
+    .subtitle { color: rgba(255,255,255,0.5); font-size: 14px; margin-bottom: 40px; text-align: center; }
+    .cards { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; max-width: 900px; }
+    .card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 32px 28px; width: 260px; text-decoration: none; color: #fff; transition: all 0.2s; cursor: pointer; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; }
+    .card:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); transform: translateY(-2px); }
+    .card-icon { font-size: 40px; }
+    .card-title { font-family: Oswald, sans-serif; font-size: 20px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+    .card-desc { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.5; }
+    .card-accent { width: 100%; height: 3px; border-radius: 2px; margin-top: 8px; }
+    .footer { margin-top: 60px; color: rgba(255,255,255,0.2); font-size: 11px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="logo"><span>LIGA</span></div>
+  <h1>Lubańska Liga Siatkówki</h1>
+  <p class="subtitle">Narzędzia do generowania grafik</p>
+
+  <div class="cards">
+    <!-- WYNIKI -->
+    <a class="card" href="https://primary-production-9c937.up.railway.app/form/e1f0cdd7-2d15-4a26-b320-83f2b9ab2640">
+      <div class="card-icon">📊</div>
+      <div class="card-title">Wyniki meczu</div>
+      <div class="card-desc">Wpisz wynik i sety — grafika wygeneruje się automatycznie</div>
+      <div class="card-accent" style="background: linear-gradient(90deg, #059669, #10b981);"></div>
+    </a>
+
+    <!-- ZAPOWIEDŹ KOLEJKI -->
+    <a class="card" href="https://primary-production-9c937.up.railway.app/form/03ec6adf-8afd-4bc9-ada3-9dc1e8835e43">
+      <div class="card-icon">📢</div>
+      <div class="card-title">Zapowiedź kolejki</div>
+      <div class="card-desc">Zbiorcza grafika z meczami kolejki (bez zdjęcia)</div>
+      <div class="card-accent" style="background: linear-gradient(90deg, #2563eb, #60a5fa);"></div>
+    </a>
+
+    <!-- ZAPOWIEDŹ ZE ZDJĘCIEM -->
+    <a class="card" href="https://primary-production-9c937.up.railway.app/form/03ec6adf-8afd-4bc9-ada3-9dc1e8835e43">
+      <div class="card-icon">📸</div>
+      <div class="card-title">Zapowiedź ze zdjęciem</div>
+      <div class="card-desc">Wybierz mecz → dodaj zdjęcie → wygeneruj grafikę zapowiedzi</div>
+      <div class="card-accent" style="background: linear-gradient(90deg, #f59e0b, #fbbf24);"></div>
+    </a>
+  </div>
+
+  <div class="footer">
+    Lubańska Liga Siatkówki &bull; Automatyzacja grafik &bull; 2026
+  </div>
+</body>
+</html>
