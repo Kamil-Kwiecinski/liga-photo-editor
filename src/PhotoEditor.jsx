@@ -422,10 +422,20 @@ export default function PhotoEditor() {
     if (isDev) { alert("Tryb deweloperski — otwórz edytor przez link z n8n."); return; }
     setStatus("sending");
     const payload = {
-      match_id: m.match_id, played_sets: m.set_scores, mode: m.mode,
-      data_meczu: m.data_meczu, godzina: m.godzina, miejsce: m.miejsce,
-      post: postImage ? { photo_base64: postImage, photo_position: pxToPercent(postBgPos, postZoom, 1080, 1080, 340, postImageNat.w, postImageNat.h), photo_zoom: `${postZoom}%`, show_sets: postShowSets, sponsorzy: postSponsors, style: isPreview ? "preview" : graphicStyle } : null,
-      story: storyImage ? { photo_base64: storyImage, photo_position: pxToPercent(storyBgPos, storyZoom, 1080, 1920, 190, storyImageNat.w, storyImageNat.h), photo_zoom: `${storyZoom}%`, show_sets: storyShowSets, sponsorzy: storySponsors, style: isPreview ? "preview" : graphicStyle } : null,
+      match_id: m.match_id,
+  played_sets: m.set_scores,
+  mode: m.mode,
+  team_home: m.team_home,
+  team_away: m.team_away,
+  kolejka: m.kolejka,
+  color_home: m.color_home,
+  color_away: m.color_away,
+  color_liga: m.color_liga,
+  data_meczu: m.data_meczu,
+  godzina: m.godzina,
+  miejsce: m.miejsce,
+  post: postImage ? { ... } : null,
+  story: storyImage ? { ... } : null,
     };
     try { const res = await fetch(N8N_WEBHOOK_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`); setStatus("ok");
