@@ -434,8 +434,22 @@ export default function PhotoEditor() {
   data_meczu: m.data_meczu,
   godzina: m.godzina,
   miejsce: m.miejsce,
-  post: postImage ? { ... } : null,
-  story: storyImage ? { ... } : null,
+  post: postImage ? {
+        photo_base64: postImage,
+        photo_position: pxToPercent(postBgPos, postZoom, 1080, 1080, 340, postImageNat.w, postImageNat.h),
+        photo_zoom: `${postZoom}%`,
+        show_sets: postShowSets,
+        sponsorzy: postSponsors,
+        style: isPreview ? "preview" : graphicStyle,
+      } : null,
+      story: storyImage ? {
+        photo_base64: storyImage,
+        photo_position: pxToPercent(storyBgPos, storyZoom, 1080, 1920, 190, storyImageNat.w, storyImageNat.h),
+        photo_zoom: `${storyZoom}%`,
+        show_sets: storyShowSets,
+        sponsorzy: storySponsors,
+        style: isPreview ? "preview" : graphicStyle,
+      } : null,
     };
     try { const res = await fetch(N8N_WEBHOOK_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`); setStatus("ok");
