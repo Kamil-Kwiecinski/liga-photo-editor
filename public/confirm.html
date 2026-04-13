@@ -3,157 +3,626 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Wyniki zapisane!</title>
+  <title>Wyniki zapisane — generuj grafiki</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       min-height: 100vh;
-      background: #0f172a;
+      background: #0a0e1a;
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      color: #e2e8f0;
+      padding: 20px;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
-      font-family: 'Segoe UI', Arial, sans-serif;
-      padding: 24px;
     }
-    .card {
-      background: #1e293b;
-      border-radius: 20px;
-      padding: 36px 28px;
-      max-width: 480px;
+    .container {
+      max-width: 520px;
       width: 100%;
-      text-align: center;
-      box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+      padding-top: 24px;
+      padding-bottom: 40px;
     }
-    .check { font-size: 56px; margin-bottom: 16px; }
-    .title { font-size: 22px; font-weight: 700; color: #f1f5f9; margin-bottom: 8px; }
-    .match-info { font-size: 14px; color: #94a3b8; margin-bottom: 28px; line-height: 1.5; }
-    .score { font-size: 32px; font-weight: 900; color: #fff; margin: 4px 0; }
-    .divider { height: 1px; background: #334155; margin: 24px 0; }
+
+    /* ── Header ── */
+    .header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .check-badge {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 28px; margin-bottom: 14px;
+      box-shadow: 0 0 24px rgba(34,197,94,0.25);
+    }
+    .header h1 {
+      font-family: 'Oswald', sans-serif;
+      font-size: 22px; font-weight: 700;
+      letter-spacing: 0.5px; color: #f8fafc;
+      margin-bottom: 6px;
+    }
+    .header .subtitle {
+      font-size: 13px; color: #64748b;
+    }
+
+    /* ── Match card ── */
+    .match-card {
+      background: #111827;
+      border: 1px solid #1e293b;
+      border-radius: 16px;
+      padding: 20px 16px;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    .kolejka-badge {
+      display: inline-block;
+      font-size: 11px; font-weight: 600;
+      color: #94a3b8; letter-spacing: 1.5px;
+      text-transform: uppercase;
+      background: rgba(255,255,255,0.05);
+      padding: 4px 14px; border-radius: 8px;
+      margin-bottom: 14px;
+    }
+    .teams-row {
+      display: flex; align-items: center; justify-content: center; gap: 16px;
+      margin-bottom: 6px;
+    }
+    .team-name {
+      font-family: 'Oswald', sans-serif;
+      font-size: 17px; font-weight: 700;
+      color: #f1f5f9; max-width: 160px;
+    }
+    .vs-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #334155; flex-shrink: 0;
+    }
+    .score-main {
+      font-family: 'Oswald', sans-serif;
+      font-size: 44px; font-weight: 700;
+      color: #fff; letter-spacing: 3px;
+      margin: 8px 0;
+    }
+    .sets-detail {
+      font-size: 13px; color: #64748b;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Options ── */
+    .options-section {
+      margin-bottom: 24px;
+    }
     .section-label {
-      font-size: 13px; color: #64748b; margin-bottom: 14px;
-      text-transform: uppercase; letter-spacing: 1px; font-weight: 600;
+      font-size: 11px; font-weight: 600;
+      color: #475569; letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      background: #111827; border: 1px solid #1e293b;
+      border-radius: 12px; padding: 14px 16px;
+      margin-bottom: 8px; cursor: pointer;
+      transition: border-color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .toggle-row:hover { border-color: #334155; }
+    .toggle-row.active { border-color: #2563eb; }
+    .toggle-left {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .toggle-icon { font-size: 18px; }
+    .toggle-text { font-size: 14px; font-weight: 500; color: #cbd5e1; }
+    .toggle-sub { font-size: 11px; color: #475569; margin-top: 2px; }
+    .toggle-switch {
+      width: 42px; height: 24px; border-radius: 12px;
+      background: #1e293b; position: relative;
+      transition: background 0.2s; flex-shrink: 0;
+    }
+    .toggle-switch::after {
+      content: ''; position: absolute;
+      top: 3px; left: 3px;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: #475569;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .toggle-row.active .toggle-switch {
+      background: #2563eb;
+    }
+    .toggle-row.active .toggle-switch::after {
+      transform: translateX(18px);
+      background: #fff;
+    }
+
+    /* ── Divider ── */
+    .divider {
+      height: 1px;
+      background: #1e293b;
+      margin: 24px 0;
+    }
+
+    /* ── Action buttons ── */
+    .actions {
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .btn {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; padding: 16px 20px;
+      font-size: 15px; font-weight: 700;
+      border-radius: 14px; border: none; cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.15s;
+      font-family: 'Inter', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.5; pointer-events: none; }
+    .btn-primary {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(37,99,235,0.3);
+    }
+    .btn-secondary {
+      background: transparent;
+      color: #e2e8f0; font-weight: 600;
+      border: 1px solid #334155;
+    }
+    .btn-secondary:hover { border-color: #475569; }
+
+    /* ── Results block ── */
+    .results-block {
+      display: none;
+      margin-top: 20px;
+    }
+    .results-block.visible { display: block; }
+    .results-header {
+      font-family: 'Oswald', sans-serif;
+      font-size: 14px; font-weight: 700;
+      color: #94a3b8; letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .results-header .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #22c55e;
     }
     .graphics-grid {
-      display: flex; gap: 12px; justify-content: center; margin-bottom: 8px;
+      display: flex; gap: 12px; justify-content: center;
+      margin-bottom: 8px;
     }
     .graphic-card {
-      flex: 1; max-width: 200px; background: #0f172a; border-radius: 12px;
-      overflow: hidden; border: 1px solid #334155; transition: border-color 0.15s;
+      flex: 1; max-width: 220px;
+      background: #111827; border-radius: 12px;
+      overflow: hidden; border: 1px solid #1e293b;
+      transition: border-color 0.15s;
     }
     .graphic-card:hover { border-color: #2563eb; }
     .graphic-card a { display: block; text-decoration: none; }
     .graphic-thumb {
-      width: 100%; aspect-ratio: 1/1; object-fit: cover; display: block;
+      width: 100%; aspect-ratio: 1/1;
+      object-fit: cover; display: block;
     }
     .graphic-thumb-story {
-      width: 100%; aspect-ratio: 9/16; object-fit: cover; display: block;
+      width: 100%; aspect-ratio: 9/16;
+      object-fit: cover; display: block;
     }
     .graphic-label {
-      padding: 10px 8px; font-size: 12px; font-weight: 600; color: #94a3b8;
-      display: flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 10px 8px; font-size: 12px; font-weight: 600;
+      color: #94a3b8; text-align: center;
     }
     .graphic-label span { color: #2563eb; }
-    .btn {
-      display: block; width: 100%; padding: 16px 24px; background: #2563eb;
-      color: #fff; font-size: 16px; font-weight: 700; border-radius: 12px;
-      text-decoration: none; transition: background 0.15s, transform 0.1s; cursor: pointer;
+    .hint-text {
+      font-size: 11px; color: #475569; text-align: center;
     }
-    .btn:active { background: #1d4ed8; transform: scale(0.98); }
-    .btn-secondary {
-      display: block; width: 100%; padding: 14px 24px; background: transparent;
-      color: #94a3b8; font-size: 14px; font-weight: 600; border-radius: 12px;
-      text-decoration: none; border: 1px solid #334155; margin-top: 10px;
-      transition: border-color 0.15s;
+
+    /* ── Loading ── */
+    .loading-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(10,14,26,0.92);
+      z-index: 100;
+      flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 20px;
     }
-    .btn-secondary:hover { border-color: #475569; }
-    .skip { display: block; margin-top: 14px; font-size: 13px; color: #475569; text-decoration: none; }
-    .teams { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 6px; }
-    .team-name { font-size: 15px; font-weight: 600; color: #e2e8f0; }
-    .vs { font-size: 12px; color: #475569; font-weight: 600; }
-    .no-graphics { font-size: 13px; color: #475569; padding: 20px 0; }
+    .loading-overlay.visible { display: flex; }
+    .spinner {
+      width: 48px; height: 48px;
+      border: 3px solid #1e293b;
+      border-top-color: #2563eb;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text {
+      font-size: 15px; color: #94a3b8; font-weight: 500;
+    }
+
+    /* ── Error ── */
+    .error-msg {
+      display: none;
+      background: #7f1d1d; border: 1px solid #991b1b;
+      color: #fecaca; font-size: 13px;
+      padding: 12px 16px; border-radius: 10px;
+      margin-bottom: 16px; text-align: center;
+    }
+    .error-msg.visible { display: block; }
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="check">✅</div>
-    <div class="title">Wyniki zapisane!</div>
-    <div class="match-info" id="match-info"></div>
+  <div class="container">
 
-    <!-- Grafiki -->
-    <div id="graphics-section" style="display:none;">
-      <div class="divider"></div>
-      <div class="section-label">📊 Wygenerowane grafiki</div>
-      <div class="graphics-grid" id="graphics-grid"></div>
-      <div style="font-size:11px;color:#475569;margin-top:6px;margin-bottom:4px;">Kliknij żeby otworzyć • przytrzymaj żeby zapisać</div>
+    <!-- Header -->
+    <div class="header">
+      <div class="check-badge">✓</div>
+      <h1>WYNIKI ZAPISANE</h1>
+      <div class="subtitle">Ustaw opcje i wygeneruj grafiki</div>
     </div>
 
-    <!-- Edytor foto -->
-    <div class="divider"></div>
-    <div class="section-label">📸 Dodaj zdjęcie z meczu</div>
-    <a class="btn" id="editor-btn" href="#">
-      <span style="margin-right:8px;">🖼️</span>Otwórz edytor zdjęcia
-    </a>
-    <a class="skip" href="#">Pomiń — nie dodaję zdjęcia</a>
+    <!-- Match card -->
+    <div class="match-card">
+      <div class="kolejka-badge" id="kolejka"></div>
+      <div class="teams-row">
+        <div class="team-name" id="team-home"></div>
+        <div class="vs-dot"></div>
+        <div class="team-name" id="team-away"></div>
+      </div>
+      <div class="score-main" id="score"></div>
+      <div class="sets-detail" id="sets-detail"></div>
+    </div>
+
+    <!-- Options toggles -->
+    <div class="options-section" id="options-section">
+      <div class="section-label">Opcje grafiki</div>
+      <div class="toggle-row" id="toggle-sponsor" onclick="toggleOption(this)">
+        <div class="toggle-left">
+          <span class="toggle-icon">🤝</span>
+          <div>
+            <div class="toggle-text">Sponsorzy</div>
+            <div class="toggle-sub">Pasek z logami na dole grafiki</div>
+          </div>
+        </div>
+        <div class="toggle-switch"></div>
+      </div>
+      <div class="toggle-row" id="toggle-setpoints" onclick="toggleOption(this)">
+        <div class="toggle-left">
+          <span class="toggle-icon">📊</span>
+          <div>
+            <div class="toggle-text">Małe punkty (sety)</div>
+            <div class="toggle-sub">Wyniki poszczególnych setów</div>
+          </div>
+        </div>
+        <div class="toggle-switch"></div>
+      </div>
+    </div>
+
+    <!-- Error -->
+    <div class="error-msg" id="error-msg"></div>
+
+    <!-- Main action buttons -->
+    <div class="actions" id="main-actions">
+      <button class="btn btn-primary" id="btn-classic" onclick="generateClassic()">
+        <span>📊</span> Generuj grafikę (bez zdjęcia)
+      </button>
+      <button class="btn btn-secondary" id="btn-photo" onclick="openEditor()">
+        <span>📸</span> Wersja ze zdjęciem z meczu
+      </button>
+    </div>
+
+    <!-- Classic results -->
+    <div class="results-block" id="results-classic">
+      <div class="results-header"><div class="dot"></div> Grafika — bez zdjęcia</div>
+      <div class="graphics-grid" id="grid-classic"></div>
+      <div class="hint-text">Kliknij żeby otworzyć • przytrzymaj żeby zapisać</div>
+    </div>
+
+    <!-- Classic sent in background info -->
+    <div class="results-block" id="classic-sent-info">
+      <div class="results-header"><div class="dot"></div> Grafika — bez zdjęcia</div>
+      <div style="font-size:13px;color:#94a3b8;background:#111827;border:1px solid #1e293b;border-radius:12px;padding:14px 16px;text-align:center;">
+        ✅ Wygenerowana automatycznie w tle — znajdziesz ją w arkuszu <strong>GRAFIKI</strong>
+      </div>
+    </div>
+
+    <!-- Photo results -->
+    <div class="results-block" id="results-photo">
+      <div class="results-header"><div class="dot"></div> Grafika — ze zdjęciem</div>
+      <div class="graphics-grid" id="grid-photo"></div>
+      <div class="hint-text">Kliknij żeby otworzyć • przytrzymaj żeby zapisać</div>
+    </div>
+
+    <!-- Extra actions (shown after one type is generated) -->
+    <div id="extra-actions" style="display:none; margin-top:16px;">
+      <div class="divider"></div>
+      <div class="actions">
+        <button class="btn btn-secondary" id="btn-also-classic" onclick="generateClassic()" style="display:none;">
+          <span>📊</span> Wygeneruj też bez zdjęcia
+        </button>
+        <button class="btn btn-secondary" id="btn-also-photo" onclick="openEditor()" style="display:none;">
+          <span>📸</span> Dodaj też wersję ze zdjęciem
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loading">
+      <div class="spinner"></div>
+      <div class="loading-text">Generuję grafiki...</div>
+    </div>
   </div>
 
   <script>
-    const p = new URLSearchParams(window.location.search);
-    const teamHome    = p.get('team_home')    || '';
-    const teamAway    = p.get('team_away')    || '';
-    const wynik       = p.get('wynik')        || '';
-    const kolejka     = p.get('kolejka')      || '';
-    const editorUrl   = p.get('editor_url')   || '';
-    const grafikaPost = p.get('grafika_post') || '';
-    const grafikaStory= p.get('grafika_story')|| '';
+    // ── Parse URL params ──
+    var p = new URLSearchParams(window.location.search);
 
-    // Match info
-    const info = document.getElementById('match-info');
-    if (teamHome && teamAway) {
-      info.innerHTML =
-        '<div class="teams">'
-        + '<span class="team-name">' + teamHome + '</span>'
-        + '<span class="vs">vs</span>'
-        + '<span class="team-name">' + teamAway + '</span>'
-        + '</div>'
-        + '<div class="score">' + wynik + '</div>'
-        + (kolejka ? '<div style="font-size:12px;color:#475569;margin-top:4px">' + kolejka + '</div>' : '');
-    } else {
-      info.innerHTML = '<span style="color:#475569">Grafiki zostały wygenerowane.</span>';
+    var teamHome    = p.get('team_home')    || '';
+    var teamAway    = p.get('team_away')    || '';
+    var wynik       = p.get('wynik')        || '';
+    var kolejka     = p.get('kolejka')      || '';
+    var sety        = p.get('sety')         || '';
+    var matchId     = p.get('match_id')     || '';
+    var colorHome   = p.get('color_home')   || '#1a56db';
+    var colorAway   = p.get('color_away')   || '#dc2626';
+    var colorLiga   = p.get('color_liga')   || '#004aad';
+    var sponsorzy   = p.get('sponsorzy')    || '';
+    var logoHome    = p.get('logo_home')    || '';
+    var logoAway    = p.get('logo_away')    || '';
+    var logoLiga    = p.get('logo_liga')    || '';
+    var rowHome     = p.get('row_home')     || '';
+    var rowAway     = p.get('row_away')     || '';
+    var submittedBy = p.get('submitted_by') || '';
+    var RENDER_URL  = p.get('render_url')   || '';
+
+    var hasClassic = false;
+    var hasPhoto   = false;
+
+    // Check if returning from editor with photo results
+    var photoPost   = p.get('foto_post')    || '';
+    var photoStory  = p.get('foto_story')   || '';
+    var classicSent = p.get('classic_sent') || '';
+
+    // ── Fill match card ──
+    document.getElementById('kolejka').textContent = kolejka;
+    document.getElementById('team-home').textContent = teamHome;
+    document.getElementById('team-away').textContent = teamAway;
+    document.getElementById('score').textContent = wynik;
+    if (sety) {
+      document.getElementById('sets-detail').textContent = 'Sety: ' + sety.replace(/,/g, '  |  ');
     }
 
-    // Graphics thumbnails
-    var section = document.getElementById('graphics-section');
-    var grid = document.getElementById('graphics-grid');
+    // If returning from editor with photo results
+    if (photoPost || photoStory) {
+      showPhotoResults(photoPost, photoStory);
+    }
 
-    if (grafikaPost || grafikaStory) {
-      section.style.display = 'block';
+    // Classic was sent in background when trainer went to editor
+    if (classicSent === '1') {
+      hasClassic = true;
+      document.getElementById('options-section').style.display = 'none';
+      document.getElementById('classic-sent-info').classList.add('visible');
+      updateButtons();
+    }
 
-      if (grafikaPost) {
-        grid.innerHTML += 
-          '<div class="graphic-card">'
-          + '<a href="' + grafikaPost + '" target="_blank">'
-          + '<img class="graphic-thumb" src="' + grafikaPost + '" alt="Post" />'
-          + '<div class="graphic-label"><span>📥</span> Post</div>'
-          + '</a></div>';
+    // ── Toggle logic ──
+    function toggleOption(el) {
+      el.classList.toggle('active');
+    }
+
+    function getOptions() {
+      return {
+        sponsor: document.getElementById('toggle-sponsor').classList.contains('active'),
+        set_points: document.getElementById('toggle-setpoints').classList.contains('active')
+      };
+    }
+
+    // ── Generate classic graphic ──
+    function generateClassic() {
+      if (!RENDER_URL) {
+        showError('Brak adresu renderera. Skontaktuj się z administratorem.');
+        return;
       }
 
-      if (grafikaStory) {
-        grid.innerHTML += 
-          '<div class="graphic-card">'
-          + '<a href="' + grafikaStory + '" target="_blank">'
-          + '<img class="graphic-thumb-story" src="' + grafikaStory + '" alt="Story" />'
-          + '<div class="graphic-label"><span>📥</span> Story</div>'
+      var opts = getOptions();
+      showLoading(true);
+      hideError();
+
+      var payload = {
+        mode: 'classic',
+        match_id: matchId,
+        team_home: teamHome,
+        team_away: teamAway,
+        wynik: wynik,
+        sety: sety,
+        kolejka: kolejka,
+        color_home: colorHome,
+        color_away: colorAway,
+        color_liga: colorLiga,
+        logo_home: logoHome,
+        logo_away: logoAway,
+        logo_liga: logoLiga,
+        sponsorzy: opts.sponsor ? sponsorzy : '',
+        set_points: opts.set_points,
+        submitted_by: submittedBy,
+        row_home: rowHome,
+        row_away: rowAway
+      };
+
+      fetch(RENDER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        showLoading(false);
+        if (data.grafika_post || data.grafika_story) {
+          showClassicResults(data.grafika_post, data.grafika_story);
+        } else {
+          showError('Nie udało się wygenerować grafik. Spróbuj ponownie.');
+        }
+      })
+      .catch(function(err) {
+        showLoading(false);
+        showError('Błąd połączenia: ' + err.message);
+      });
+    }
+
+    // ── Show classic results ──
+    function showClassicResults(postUrl, storyUrl) {
+      hasClassic = true;
+      var grid = document.getElementById('grid-classic');
+      grid.innerHTML = buildThumbnails(postUrl, storyUrl);
+      document.getElementById('results-classic').classList.add('visible');
+      updateButtons();
+    }
+
+    // ── Show photo results ──
+    function showPhotoResults(postUrl, storyUrl) {
+      hasPhoto = true;
+      var grid = document.getElementById('grid-photo');
+      grid.innerHTML = buildThumbnails(postUrl, storyUrl);
+      document.getElementById('results-photo').classList.add('visible');
+      updateButtons();
+    }
+
+    // ── Build thumbnail HTML ──
+    function buildThumbnails(postUrl, storyUrl) {
+      var html = '';
+      if (postUrl) {
+        html += '<div class="graphic-card">'
+          + '<a href="' + postUrl + '" target="_blank">'
+          + '<img class="graphic-thumb" src="' + postUrl + '" alt="Post" />'
+          + '<div class="graphic-label"><span>📥</span> Post 1080×1080</div>'
           + '</a></div>';
+      }
+      if (storyUrl) {
+        html += '<div class="graphic-card">'
+          + '<a href="' + storyUrl + '" target="_blank">'
+          + '<img class="graphic-thumb-story" src="' + storyUrl + '" alt="Story" />'
+          + '<div class="graphic-label"><span>📥</span> Story 1080×1920</div>'
+          + '</a></div>';
+      }
+      return html;
+    }
+
+    // ── Update buttons after generation ──
+    function updateButtons() {
+      var mainActions = document.getElementById('main-actions');
+      var extra = document.getElementById('extra-actions');
+      var btnAlsoClassic = document.getElementById('btn-also-classic');
+      var btnAlsoPhoto = document.getElementById('btn-also-photo');
+
+      if (hasClassic && hasPhoto) {
+        mainActions.style.display = 'none';
+        extra.style.display = 'none';
+      } else if (hasClassic && !hasPhoto) {
+        mainActions.style.display = 'none';
+        extra.style.display = 'block';
+        btnAlsoClassic.style.display = 'none';
+        btnAlsoPhoto.style.display = 'flex';
+      } else if (!hasClassic && hasPhoto) {
+        mainActions.style.display = 'none';
+        extra.style.display = 'block';
+        btnAlsoClassic.style.display = 'flex';
+        btnAlsoPhoto.style.display = 'none';
       }
     }
 
-    // Editor button
-    var btn = document.getElementById('editor-btn');
-    if (editorUrl) {
-      btn.href = editorUrl;
-    } else {
-      btn.style.opacity = '0.4';
-      btn.style.pointerEvents = 'none';
+    // ── Open photo editor ──
+    function openEditor() {
+      var opts = getOptions();
+      var editorBase = 'https://liga-photo-editor.vercel.app';
+
+      // Fire-and-forget: render classic in background while trainer edits photo
+      if (RENDER_URL && !hasClassic) {
+        var classicPayload = {
+          mode: 'classic',
+          match_id: matchId,
+          team_home: teamHome,
+          team_away: teamAway,
+          wynik: wynik,
+          sety: sety,
+          kolejka: kolejka,
+          color_home: colorHome,
+          color_away: colorAway,
+          color_liga: colorLiga,
+          logo_home: logoHome,
+          logo_away: logoAway,
+          logo_liga: logoLiga,
+          sponsorzy: opts.sponsor ? sponsorzy : '',
+          set_points: opts.set_points,
+          submitted_by: submittedBy,
+          row_home: rowHome,
+          row_away: rowAway
+        };
+        // Don't await — just send and move on
+        fetch(RENDER_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(classicPayload)
+        }).catch(function() {}); // silent fail, classic will be in GRAFIKI sheet
+      }
+
+      // Build return URL so editor can redirect back with results
+      var returnBase = window.location.origin + '/confirm.html';
+      var returnParams = 'match_id='     + encodeURIComponent(matchId)
+        + '&team_home='    + encodeURIComponent(teamHome)
+        + '&team_away='    + encodeURIComponent(teamAway)
+        + '&wynik='        + encodeURIComponent(wynik)
+        + '&sety='         + encodeURIComponent(sety)
+        + '&kolejka='      + encodeURIComponent(kolejka)
+        + '&color_home='   + encodeURIComponent(colorHome)
+        + '&color_away='   + encodeURIComponent(colorAway)
+        + '&color_liga='   + encodeURIComponent(colorLiga)
+        + '&logo_home='    + encodeURIComponent(logoHome)
+        + '&logo_away='    + encodeURIComponent(logoAway)
+        + '&logo_liga='    + encodeURIComponent(logoLiga)
+        + '&sponsorzy='    + encodeURIComponent(sponsorzy)
+        + '&row_home='     + encodeURIComponent(rowHome)
+        + '&row_away='     + encodeURIComponent(rowAway)
+        + '&submitted_by=' + encodeURIComponent(submittedBy)
+        + '&render_url='   + encodeURIComponent(RENDER_URL)
+        + '&classic_sent=1';
+
+      var returnUrl = returnBase + '?' + returnParams;
+
+      var editorUrl = editorBase
+        + '?match_id='     + encodeURIComponent(matchId)
+        + '&team_home='    + encodeURIComponent(teamHome)
+        + '&team_away='    + encodeURIComponent(teamAway)
+        + '&wynik='        + encodeURIComponent(wynik)
+        + '&sety='         + encodeURIComponent(sety)
+        + '&kolejka='      + encodeURIComponent(kolejka)
+        + '&color_home='   + encodeURIComponent(colorHome)
+        + '&color_away='   + encodeURIComponent(colorAway)
+        + '&color_liga='   + encodeURIComponent(colorLiga)
+        + '&logo_home='    + encodeURIComponent(logoHome)
+        + '&logo_away='    + encodeURIComponent(logoAway)
+        + '&logo_liga='    + encodeURIComponent(logoLiga)
+        + '&sponsorzy='    + (opts.sponsor ? encodeURIComponent(sponsorzy) : '')
+        + '&set_points='   + (opts.set_points ? '1' : '0')
+        + '&return_url='   + encodeURIComponent(returnUrl);
+
+      window.location.href = editorUrl;
+    }
+
+    // ── Loading ──
+    function showLoading(show) {
+      var el = document.getElementById('loading');
+      if (show) el.classList.add('visible');
+      else el.classList.remove('visible');
+    }
+
+    // ── Error ──
+    function showError(msg) {
+      var el = document.getElementById('error-msg');
+      el.textContent = msg;
+      el.classList.add('visible');
+    }
+    function hideError() {
+      document.getElementById('error-msg').classList.remove('visible');
     }
   </script>
 </body>
