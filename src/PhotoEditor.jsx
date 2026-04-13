@@ -409,6 +409,7 @@ export default function PhotoEditor() {
   const [storyZoom, setStoryZoom] = useState(150); const [storyBgPos, setStoryBgPos] = useState("0px 0px");
   const [storyShowSets, setStoryShowSets] = useState(false); const [storySponsors, setStorySponsors] = useState([]);
   const [status, setStatus] = useState(null);
+  const [resultUrls, setResultUrls] = useState(null);
 
   const loadImage = useCallback((onLoaded, targetW, targetH, previewW) => (e) => {
     const file = e.target.files?.[0]; if (!file) return;
@@ -418,9 +419,10 @@ export default function PhotoEditor() {
       img.src = src; }; reader.readAsDataURL(file); }, []);
 
   const generateGraphics = async () => {
-    if (!postImage && !storyImage) { alert("Wgraj przynajmniej jedno zdjęcie."); return; }
+    //if (!postImage && !storyImage) { alert("Wgraj przynajmniej jedno zdjęcie."); return; }
     if (isDev) { alert("Tryb deweloperski — otwórz edytor przez link z n8n."); return; }
     setStatus("sending");
+    setResultUrls(null);
     const payload = {
       match_id: m.match_id,
   played_sets: m.set_scores,
@@ -452,7 +454,10 @@ export default function PhotoEditor() {
       } : null,
     };
     try { const res = await fetch(N8N_WEBHOOK_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`); setStatus("ok");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        setStatus("ok");
+        setResultUrls({ post: data.grafika_post || '', story: data.grafika_story || '' });
     } catch (err) { console.error(err); setStatus("error"); }
   };
 
@@ -494,6 +499,26 @@ export default function PhotoEditor() {
       <button onClick={generateGraphics} disabled={status === "sending"} className="px-6 py-3 rounded-lg text-sm font-bold text-white"
         style={{ marginTop: 8, minWidth: 200, border: "none", cursor: status === "sending" ? "not-allowed" : "pointer",
           background: status === "sending" ? "#6b7280" : status === "ok" ? "#059669" : status === "error" ? "#dc2626" : "#2563eb" }}>
-        {status === "sending" ? "⏳ Wysyłanie…" : status === "ok" ? "✅ Wysłano! Grafiki za chwilę w arkuszu." : status === "error" ? "❌ Błąd — spróbuj ponownie" : isPreview ? "🚀 Generuj zapowiedź z tym zdjęciem" : "🚀 Generuj grafiki z tym zdjęciem"}</button>
+        {status === "sending" ? "⏳ Wysyłanie…" : status === "ok" ? "✅ Wysłano! Grafiki za chwilę w arkuszu." : status === "error" ? "❌ Błąd — spróbuj ponownie" : isPreview ? "🚀 Generuj zapowiedź" : "🚀 Generuj grafiki"}</button>
+      {resultUrls && (resultUrls.post || resultUrls.story) && (
+  <div style={{ marginTop: 16, padding: "16px 20px", background: "rgba(5,150,105,0.1)", borderRadius: 12, border: "1px solid rgba(5,150,105,0.3)" }}>
+    <p style={{ fontSize: 12, fontWeight: 600, color: "#059669", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12, textAlign: "center" }}>Gotowe! Kliknij żeby otworzyć</p>
+    <div style={{ display: "flex", gap: 16, justifyContent: "center" }}>
+      {resultUrls.post && (
+        <a href={resultUrls.post} target="_blank" rel="noopener noreferrer" style={{ textAlign: "center", textDecoration: "none" }}>
+          <img src={resultUrls.post} alt="Post" style={{ width: 160, height: 160, objectFit: "cover", borderRadius: 8, border: "2px solid #059669" }} />
+          <div style={{ fontSize: 11, color: "#059669", marginTop: 6, fontWeight: 600 }}>📥 Post 1080×1080</div>
+        </a>
+      )}
+      {resultUrls.story && (
+        <a href={resultUrls.story} target="_blank" rel="noopener noreferrer" style={{ textAlign: "center", textDecoration: "none" }}>
+          <img src={resultUrls.story} alt="Story" style={{ width: 90, height: 160, objectFit: "cover", borderRadius: 8, border: "2px solid #059669" }} />
+          <div style={{ fontSize: 11, color: "#059669", marginTop: 6, fontWeight: 600 }}>📥 Story 1080×1920</div>
+        </a>
+      )}
+    </div>
+    <p style={{ fontSize: 10, color: "#6b7280", marginTop: 8, textAlign: "center" }}>Przytrzymaj obrazek żeby zapisać na telefonie</p>
+  </div>
+)}
       {status === "error" && <p style={{ fontSize: 11, color: "#dc2626", textAlign: "center" }}>Sprawdź czy workflow w n8n jest aktywny (Production).</p>}</div>);
 }
