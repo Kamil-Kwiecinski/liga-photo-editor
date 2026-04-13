@@ -6,7 +6,6 @@
   <title>Wyniki zapisane!</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     body {
       min-height: 100vh;
       background: #0f172a;
@@ -16,158 +15,140 @@
       font-family: 'Segoe UI', Arial, sans-serif;
       padding: 24px;
     }
-
     .card {
       background: #1e293b;
       border-radius: 20px;
       padding: 36px 28px;
-      max-width: 420px;
+      max-width: 480px;
       width: 100%;
       text-align: center;
       box-shadow: 0 24px 64px rgba(0,0,0,0.5);
     }
-
-    .check {
-      font-size: 56px;
-      margin-bottom: 16px;
+    .check { font-size: 56px; margin-bottom: 16px; }
+    .title { font-size: 22px; font-weight: 700; color: #f1f5f9; margin-bottom: 8px; }
+    .match-info { font-size: 14px; color: #94a3b8; margin-bottom: 28px; line-height: 1.5; }
+    .score { font-size: 32px; font-weight: 900; color: #fff; margin: 4px 0; }
+    .divider { height: 1px; background: #334155; margin: 24px 0; }
+    .section-label {
+      font-size: 13px; color: #64748b; margin-bottom: 14px;
+      text-transform: uppercase; letter-spacing: 1px; font-weight: 600;
     }
-
-    .title {
-      font-size: 22px;
-      font-weight: 700;
-      color: #f1f5f9;
-      margin-bottom: 8px;
+    .graphics-grid {
+      display: flex; gap: 12px; justify-content: center; margin-bottom: 8px;
     }
-
-    .match-info {
-      font-size: 14px;
-      color: #94a3b8;
-      margin-bottom: 28px;
-      line-height: 1.5;
+    .graphic-card {
+      flex: 1; max-width: 200px; background: #0f172a; border-radius: 12px;
+      overflow: hidden; border: 1px solid #334155; transition: border-color 0.15s;
     }
-
-    .score {
-      font-size: 32px;
-      font-weight: 900;
-      color: #fff;
-      margin: 4px 0;
+    .graphic-card:hover { border-color: #2563eb; }
+    .graphic-card a { display: block; text-decoration: none; }
+    .graphic-thumb {
+      width: 100%; aspect-ratio: 1/1; object-fit: cover; display: block;
     }
-
-    .divider {
-      height: 1px;
-      background: #334155;
-      margin: 24px 0;
+    .graphic-thumb-story {
+      width: 100%; aspect-ratio: 9/16; object-fit: cover; display: block;
     }
-
-    .photo-label {
-      font-size: 13px;
-      color: #64748b;
-      margin-bottom: 14px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      font-weight: 600;
+    .graphic-label {
+      padding: 10px 8px; font-size: 12px; font-weight: 600; color: #94a3b8;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
     }
-
+    .graphic-label span { color: #2563eb; }
     .btn {
-      display: block;
-      width: 100%;
-      padding: 16px 24px;
-      background: #2563eb;
-      color: #fff;
-      font-size: 16px;
-      font-weight: 700;
-      border-radius: 12px;
-      text-decoration: none;
-      transition: background 0.15s, transform 0.1s;
-      cursor: pointer;
+      display: block; width: 100%; padding: 16px 24px; background: #2563eb;
+      color: #fff; font-size: 16px; font-weight: 700; border-radius: 12px;
+      text-decoration: none; transition: background 0.15s, transform 0.1s; cursor: pointer;
     }
-
-    .btn:active {
-      background: #1d4ed8;
-      transform: scale(0.98);
+    .btn:active { background: #1d4ed8; transform: scale(0.98); }
+    .btn-secondary {
+      display: block; width: 100%; padding: 14px 24px; background: transparent;
+      color: #94a3b8; font-size: 14px; font-weight: 600; border-radius: 12px;
+      text-decoration: none; border: 1px solid #334155; margin-top: 10px;
+      transition: border-color 0.15s;
     }
-
-    .btn-icon {
-      font-size: 20px;
-      margin-right: 8px;
-    }
-
-    .skip {
-      display: block;
-      margin-top: 14px;
-      font-size: 13px;
-      color: #475569;
-      text-decoration: none;
-    }
-
-    .teams {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      margin-bottom: 6px;
-    }
-
-    .team-name {
-      font-size: 15px;
-      font-weight: 600;
-      color: #e2e8f0;
-    }
-
-    .vs {
-      font-size: 12px;
-      color: #475569;
-      font-weight: 600;
-    }
+    .btn-secondary:hover { border-color: #475569; }
+    .skip { display: block; margin-top: 14px; font-size: 13px; color: #475569; text-decoration: none; }
+    .teams { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 6px; }
+    .team-name { font-size: 15px; font-weight: 600; color: #e2e8f0; }
+    .vs { font-size: 12px; color: #475569; font-weight: 600; }
+    .no-graphics { font-size: 13px; color: #475569; padding: 20px 0; }
   </style>
 </head>
 <body>
   <div class="card">
     <div class="check">✅</div>
     <div class="title">Wyniki zapisane!</div>
+    <div class="match-info" id="match-info"></div>
 
-    <div class="match-info" id="match-info">
-      <!-- wypełniane przez JS -->
+    <!-- Grafiki -->
+    <div id="graphics-section" style="display:none;">
+      <div class="divider"></div>
+      <div class="section-label">📊 Wygenerowane grafiki</div>
+      <div class="graphics-grid" id="graphics-grid"></div>
+      <div style="font-size:11px;color:#475569;margin-top:6px;margin-bottom:4px;">Kliknij żeby otworzyć • przytrzymaj żeby zapisać</div>
     </div>
 
+    <!-- Edytor foto -->
     <div class="divider"></div>
-
-    <div class="photo-label">📸 Dodaj zdjęcie z meczu</div>
-
+    <div class="section-label">📸 Dodaj zdjęcie z meczu</div>
     <a class="btn" id="editor-btn" href="#">
-      <span class="btn-icon">🖼️</span>Otwórz edytor zdjęcia
+      <span style="margin-right:8px;">🖼️</span>Otwórz edytor zdjęcia
     </a>
-
     <a class="skip" href="#">Pomiń — nie dodaję zdjęcia</a>
   </div>
 
   <script>
     const p = new URLSearchParams(window.location.search);
+    const teamHome    = p.get('team_home')    || '';
+    const teamAway    = p.get('team_away')    || '';
+    const wynik       = p.get('wynik')        || '';
+    const kolejka     = p.get('kolejka')      || '';
+    const editorUrl   = p.get('editor_url')   || '';
+    const grafikaPost = p.get('grafika_post') || '';
+    const grafikaStory= p.get('grafika_story')|| '';
 
-    const teamHome  = p.get('team_home')  || '';
-    const teamAway  = p.get('team_away')  || '';
-    const wynik     = p.get('wynik')      || '';
-    const kolejka   = p.get('kolejka')    || '';
-    const editorUrl = p.get('editor_url') || '';
-
-    // Wypełnij info o meczu
+    // Match info
     const info = document.getElementById('match-info');
     if (teamHome && teamAway) {
-      info.innerHTML = `
-        <div class="teams">
-          <span class="team-name">${teamHome}</span>
-          <span class="vs">vs</span>
-          <span class="team-name">${teamAway}</span>
-        </div>
-        <div class="score">${wynik}</div>
-        ${kolejka ? `<div style="font-size:12px;color:#475569;margin-top:4px">${kolejka}</div>` : ''}
-      `;
+      info.innerHTML =
+        '<div class="teams">'
+        + '<span class="team-name">' + teamHome + '</span>'
+        + '<span class="vs">vs</span>'
+        + '<span class="team-name">' + teamAway + '</span>'
+        + '</div>'
+        + '<div class="score">' + wynik + '</div>'
+        + (kolejka ? '<div style="font-size:12px;color:#475569;margin-top:4px">' + kolejka + '</div>' : '');
     } else {
-      info.innerHTML = '<span style="color:#475569">Grafiki klasyczne zostały wygenerowane.</span>';
+      info.innerHTML = '<span style="color:#475569">Grafiki zostały wygenerowane.</span>';
     }
 
-    // Ustaw link do edytora
-    const btn = document.getElementById('editor-btn');
+    // Graphics thumbnails
+    var section = document.getElementById('graphics-section');
+    var grid = document.getElementById('graphics-grid');
+
+    if (grafikaPost || grafikaStory) {
+      section.style.display = 'block';
+
+      if (grafikaPost) {
+        grid.innerHTML += 
+          '<div class="graphic-card">'
+          + '<a href="' + grafikaPost + '" target="_blank">'
+          + '<img class="graphic-thumb" src="' + grafikaPost + '" alt="Post" />'
+          + '<div class="graphic-label"><span>📥</span> Post</div>'
+          + '</a></div>';
+      }
+
+      if (grafikaStory) {
+        grid.innerHTML += 
+          '<div class="graphic-card">'
+          + '<a href="' + grafikaStory + '" target="_blank">'
+          + '<img class="graphic-thumb-story" src="' + grafikaStory + '" alt="Story" />'
+          + '<div class="graphic-label"><span>📥</span> Story</div>'
+          + '</a></div>';
+      }
+    }
+
+    // Editor button
+    var btn = document.getElementById('editor-btn');
     if (editorUrl) {
       btn.href = editorUrl;
     } else {
