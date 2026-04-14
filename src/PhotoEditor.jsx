@@ -525,12 +525,12 @@ export default function PhotoEditor() {
       {/* ── Preview panels ── */}
       <div className="flex gap-6 flex-wrap justify-center items-start">
         <PreviewPanel label="Post 1080×1080" targetW={1080} targetH={1080} image={postImage} imageNat={postImageNat} zoom={postZoom} bgPos={postBgPos} setBgPos={setPostBgPos}
-          onUpload={loadImage((src, nat, initPos) => { setPostImage(src); setPostImageNat(nat); setPostZoom(150); setPostBgPos(initPos); }, 1080, 1080, 340)}
+          onUpload={loadImage((src, nat, initPos) => { setPostImage(src); setPostImageNat(nat); setPostZoom(150); setPostBgPos(initPos); setStatus(null); setResultUrls(null);}, 1080, 1080, 340)}
           onRemove={() => { setPostImage(null); setPostImageNat({ w: 0, h: 0 }); setPostZoom(150); setPostBgPos("0px 0px"); }}
           m={m} maxPreviewW={340} showSets={showSets} selectedSponsors={selectedSponsors}
           onZoomChange={(z) => { setPostBgPos(prev => rescaleBgPos(prev, postZoom, z, 1080, 1080, 340, postImageNat.w, postImageNat.h)); setPostZoom(z); }} graphicStyle={graphicStyle} />
         <PreviewPanel label="Story 1080×1920" targetW={1080} targetH={1920} image={storyImage} imageNat={storyImageNat} zoom={storyZoom} bgPos={storyBgPos} setBgPos={setStoryBgPos}
-          onUpload={loadImage((src, nat, initPos) => { setStoryImage(src); setStoryImageNat(nat); setStoryZoom(150); setStoryBgPos(initPos); }, 1080, 1920, 190)}
+          onUpload={loadImage((src, nat, initPos) => { setStoryImage(src); setStoryImageNat(nat); setStoryZoom(150); setStoryBgPos(initPos); setStatus(null); setResultUrls(null);}, 1080, 1920, 190)}
           onRemove={() => { setStoryImage(null); setStoryImageNat({ w: 0, h: 0 }); setStoryZoom(150); setStoryBgPos("0px 0px"); }}
           m={m} maxPreviewW={190} showSets={showSets} selectedSponsors={selectedSponsors}
           onZoomChange={(z) => { setStoryBgPos(prev => rescaleBgPos(prev, storyZoom, z, 1080, 1920, 190, storyImageNat.w, storyImageNat.h)); setStoryZoom(z); }} graphicStyle={graphicStyle} />
@@ -562,7 +562,7 @@ export default function PhotoEditor() {
       <button onClick={generateGraphics} disabled={status === "sending"} className="px-6 py-3 rounded-lg text-sm font-bold text-white"
         style={{ marginTop: 8, minWidth: 200, border: "none", cursor: status === "sending" ? "not-allowed" : "pointer",
           background: status === "sending" ? "#6b7280" : status === "ok" ? "#059669" : status === "error" ? "#dc2626" : "#2563eb" }}>
-        {status === "sending" ? "⏳ Generuję…" : status === "ok" ? "✅ Gotowe!" : status === "error" ? "❌ Błąd — spróbuj ponownie" : "🚀 Generuj grafiki"}
+        {status === "sending" ? "⏳ Generuję…" : status === "ok" ? "✅ Gotowe! Generuj ponownie" : status === "error" ? "❌ Błąd — spróbuj ponownie" : "🚀 Generuj grafiki"}
       </button>
 
       {/* ── Result thumbnails ── */}
