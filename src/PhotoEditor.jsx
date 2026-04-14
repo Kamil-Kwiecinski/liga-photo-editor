@@ -128,7 +128,7 @@ function PhotoOverlayStory({ s, m, showSets, selectedSponsors }) {
 }
 
 // ── SPLIT PANEL OVERLAYS — RESULT ────────────────────────────────────────────
-function SplitPanelOverlayPost({ s, m, selectedSponsors }) {
+function SplitPanelOverlayPost({ s, m, showSets, selectedSponsors }) {
   const panelW = 0.42; const numSets = m.set_scores.length;
   const scoreFontSize = numSets >= 5 ? 60 : 80; const setFontSize = numSets >= 5 ? 18 : 22;
   const setMarginBottom = numSets >= 5 ? 2 : 4; const teamLogoSize = numSets >= 5 ? 44 : 52;
@@ -159,19 +159,22 @@ function SplitPanelOverlayPost({ s, m, selectedSponsors }) {
           <div style={{ display: "flex", alignItems: "center", gap: 12 * s }}>
             <div style={{ width: teamLogoSize * s, height: teamLogoSize * s, borderRadius: "50%", border: `2px solid ${m.color_away}`, background: "rgba(255,255,255,0.04)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><span style={{ color: m.color_away, fontSize: teamLogoSize * 0.42 * s, fontWeight: 800 }}>{m.team_away.charAt(0)}</span></div>
             <span style={{ color: "#fff", fontSize: awayNameFs * s, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>{m.team_away}</span></div></div>
-        <div style={{ position: "absolute", bottom: panelPadBottom * s, left: 104 * s, right: 32 * s }}>
-          <div style={{ fontSize: 11 * s, fontWeight: 600, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: 2, marginBottom: 6 * s }}>Wyniki setów</div>
-          {m.set_scores.map((sc, i) => { const homeWon = sc.home > sc.away; return (
-            <div key={i} style={{ display: "flex", alignItems: "center", marginBottom: setMarginBottom * s }}>
-              <span style={{ width: 18 * s, fontSize: 11 * s, color: "rgba(255,255,255,0.35)" }}>{i + 1}</span>
-              <span style={{ fontSize: setFontSize * s, fontWeight: homeWon ? 700 : 400, color: homeWon ? m.color_home : "rgba(255,255,255,0.5)", width: 32 * s, textAlign: "right" }}>{sc.home}</span>
-              <span style={{ fontSize: 12 * s, color: "rgba(255,255,255,0.25)", margin: `0 ${5 * s}px` }}>–</span>
-              <span style={{ fontSize: setFontSize * s, fontWeight: homeWon ? 400 : 700, color: homeWon ? "rgba(255,255,255,0.5)" : m.color_away, width: 32 * s }}>{sc.away}</span></div>); })}</div></div>
+        {showSets && (
+          <div style={{ position: "absolute", bottom: panelPadBottom * s, left: 104 * s, right: 32 * s }}>
+            <div style={{ fontSize: 11 * s, fontWeight: 600, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: 2, marginBottom: 6 * s }}>Wyniki setów</div>
+            {m.set_scores.map((sc, i) => { const homeWon = sc.home > sc.away; return (
+              <div key={i} style={{ display: "flex", alignItems: "center", marginBottom: setMarginBottom * s }}>
+                <span style={{ width: 18 * s, fontSize: 11 * s, color: "rgba(255,255,255,0.35)" }}>{i + 1}</span>
+                <span style={{ fontSize: setFontSize * s, fontWeight: homeWon ? 700 : 400, color: homeWon ? m.color_home : "rgba(255,255,255,0.5)", width: 32 * s, textAlign: "right" }}>{sc.home}</span>
+                <span style={{ fontSize: 12 * s, color: "rgba(255,255,255,0.25)", margin: `0 ${5 * s}px` }}>–</span>
+                <span style={{ fontSize: setFontSize * s, fontWeight: homeWon ? 400 : 700, color: homeWon ? "rgba(255,255,255,0.5)" : m.color_away, width: 32 * s }}>{sc.away}</span></div>); })}
+          </div>
+        )}</div>
       <div style={{ position: "absolute", bottom: (80 + sponsorBarH) * s, right: 40 * s, fontFamily: "Anton, sans-serif", fontSize: 120 * s, fontWeight: 400, color: "rgba(255,255,255,0.08)", lineHeight: 1.05, textAlign: "right", textTransform: "uppercase", letterSpacing: 2 }}>WYNIK<br/>MECZU</div>
       {selectedSponsors.length > 0 && (<div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 80 * s, background: "rgba(0,0,0,0.9)", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 * s }}>
         {selectedSponsors.map((url, i) => <img key={i} src={url} alt="" style={{ height: 42 * s, maxWidth: 120 * s, objectFit: "contain", filter: "brightness(0) invert(1)", opacity: 0.7 }} />)}</div>)}</div>);
 }
-function SplitPanelOverlayStory({ s, m, selectedSponsors }) {
+function SplitPanelOverlayStory({ s, m, showSets, selectedSponsors }) {
   const splitAt = 0.55; const sponsorBarH = selectedSponsors.length > 0 ? 100 : 0;
   return (
     <div className="absolute inset-0 z-10" style={{ pointerEvents: "none" }}>
@@ -190,13 +193,16 @@ function SplitPanelOverlayStory({ s, m, selectedSponsors }) {
           <div style={{ textAlign: "center" }}>
             <div style={{ width: 130 * s, height: 130 * s, borderRadius: "50%", border: `4px solid ${m.color_away}`, background: "rgba(255,255,255,0.04)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto" }}><span style={{ color: m.color_away, fontSize: 52 * s, fontWeight: 800 }}>{m.team_away.charAt(0)}</span></div>
             <div style={{ color: "#fff", fontSize: 30 * s, fontWeight: 700, marginTop: 14 * s, textTransform: "uppercase" }}>{m.team_away}</div></div></div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 * s }}>
-          {m.set_scores.map((sc, i) => { const homeWon = sc.home > sc.away; return (
-            <div key={i} style={{ display: "flex", alignItems: "center" }}>
-              {i > 0 && <span style={{ color: "rgba(255,255,255,0.25)", margin: `0 ${6 * s}px`, fontSize: 28 * s }}>|</span>}
-              <span style={{ fontSize: 44 * s, fontWeight: homeWon ? 700 : 400, color: homeWon ? m.color_home : "rgba(255,255,255,0.5)" }}>{sc.home}</span>
-              <span style={{ fontSize: 28 * s, color: "rgba(255,255,255,0.3)", margin: `0 ${2 * s}px` }}>:</span>
-              <span style={{ fontSize: 44 * s, fontWeight: homeWon ? 400 : 700, color: homeWon ? "rgba(255,255,255,0.5)" : m.color_away }}>{sc.away}</span></div>); })}</div></div>
+        {showSets && (
+          <div style={{ display: "flex", alignItems: "center", gap: 12 * s }}>
+            {m.set_scores.map((sc, i) => { const homeWon = sc.home > sc.away; return (
+              <div key={i} style={{ display: "flex", alignItems: "center" }}>
+                {i > 0 && <span style={{ color: "rgba(255,255,255,0.25)", margin: `0 ${6 * s}px`, fontSize: 28 * s }}>|</span>}
+                <span style={{ fontSize: 44 * s, fontWeight: homeWon ? 700 : 400, color: homeWon ? m.color_home : "rgba(255,255,255,0.5)" }}>{sc.home}</span>
+                <span style={{ fontSize: 28 * s, color: "rgba(255,255,255,0.3)", margin: `0 ${2 * s}px` }}>:</span>
+                <span style={{ fontSize: 44 * s, fontWeight: homeWon ? 400 : 700, color: homeWon ? "rgba(255,255,255,0.5)" : m.color_away }}>{sc.away}</span></div>); })}
+          </div>
+        )}</div>
       {selectedSponsors.length > 0 && (<div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 100 * s, background: "rgba(0,0,0,0.9)", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 * s }}>
         {selectedSponsors.map((url, i) => <img key={i} src={url} alt="" style={{ height: 52 * s, maxWidth: 120 * s, objectFit: "contain", filter: "brightness(0) invert(1)", opacity: 0.7 }} />)}</div>)}</div>);
 }
@@ -264,8 +270,6 @@ function SplitPanelPreviewStory({ s, m, selectedSponsors }) {
 }
 
 // ── NO-PHOTO VARIANTS ────────────────────────────────────────────────────────
-// showSets: OFF = no sets at all, ON = set table (post) / score rows (story)
-// selectedSponsors: shown at bottom bar
 function NoPhotoPost({ s, m, showSets, selectedSponsors }) {
   const isPreview = m.mode === "preview";
   const sponsorBarH = selectedSponsors.length > 0 ? 80 : 0;
@@ -378,7 +382,7 @@ function PreviewPanel({ label, targetW, targetH, image, imageNat, zoom, bgPos, s
   function renderOverlay() {
     if (!image) return isStory ? <NoPhotoStory s={s} m={m} showSets={showSets} selectedSponsors={selectedSponsors} /> : <NoPhotoPost s={s} m={m} showSets={showSets} selectedSponsors={selectedSponsors} />;
     if (m.mode === "preview") return isStory ? <SplitPanelPreviewStory s={s} m={m} selectedSponsors={selectedSponsors} /> : <SplitPanelPreviewPost s={s} m={m} selectedSponsors={selectedSponsors} />;
-    if (graphicStyle === "split_panel") return isStory ? <SplitPanelOverlayStory s={s} m={m} selectedSponsors={selectedSponsors} /> : <SplitPanelOverlayPost s={s} m={m} selectedSponsors={selectedSponsors} />;
+    if (graphicStyle === "split_panel") return isStory ? <SplitPanelOverlayStory s={s} m={m} showSets={showSets} selectedSponsors={selectedSponsors} /> : <SplitPanelOverlayPost s={s} m={m} showSets={showSets} selectedSponsors={selectedSponsors} />;
     return isStory ? <PhotoOverlayStory s={s} m={m} showSets={showSets} selectedSponsors={selectedSponsors} /> : <PhotoOverlayPost s={s} m={m} showSets={showSets} selectedSponsors={selectedSponsors} />;
   }
   const showDefaultGrad = image && graphicStyle !== "split_panel" && m.mode !== "preview";
@@ -537,21 +541,23 @@ export default function PhotoEditor() {
       </div>
 
       {/* ── Shared controls BELOW panels ── */}
-      {!isPreview && (
+      {(!isPreview || m.sponsorzy.length > 0) && (
         <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%", maxWidth: 600, background: "rgba(0,0,0,0.04)", borderRadius: 12, padding: "12px 16px" }}>
-          <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", userSelect: "none" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 16 }}>📊</span>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 500, color: "var(--color-text-primary, #333)" }}>Małe punkty (sety)</div>
-                <div style={{ fontSize: 10, color: "var(--color-text-secondary, #888)" }}>Pokaż wyniki setów na grafice</div>
+          {!isPreview && (
+            <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", userSelect: "none" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 16 }}>📊</span>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: "var(--color-text-primary, #333)" }}>Małe punkty (sety)</div>
+                  <div style={{ fontSize: 10, color: "var(--color-text-secondary, #888)" }}>Pokaż wyniki setów na grafice</div>
+                </div>
               </div>
-            </div>
-            <div onClick={(e) => { e.preventDefault(); setShowSets(v => !v); }}
-              style={{ width: 42, height: 24, borderRadius: 12, background: showSets ? "#2563eb" : "#374151", position: "relative", transition: "background 0.2s", flexShrink: 0, cursor: "pointer" }}>
-              <div style={{ position: "absolute", top: 3, left: showSets ? 21 : 3, width: 18, height: 18, borderRadius: "50%", background: "#fff", transition: "left 0.2s" }} />
-            </div>
-          </label>
+              <div onClick={(e) => { e.preventDefault(); setShowSets(v => !v); }}
+                style={{ width: 42, height: 24, borderRadius: 12, background: showSets ? "#2563eb" : "#374151", position: "relative", transition: "background 0.2s", flexShrink: 0, cursor: "pointer" }}>
+                <div style={{ position: "absolute", top: 3, left: showSets ? 21 : 3, width: 18, height: 18, borderRadius: "50%", background: "#fff", transition: "left 0.2s" }} />
+              </div>
+            </label>
+          )}
           {m.sponsorzy.length > 0 && (
             <SponsorsSelector sponsorzy={m.sponsorzy} selected={selectedSponsors} setSelected={setSelectedSponsors} />
           )}
