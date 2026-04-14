@@ -75,10 +75,11 @@ function rescaleBgPos(bgPos, oldZoom, newZoom, targetW, targetH, previewW, natW,
   return `${newPx.toFixed(0)}px ${newPy.toFixed(0)}px`;
 }
 
-// ── CLASSIC OVERLAYS ─────────────────────────────────────────────────────────
+// ── CLASSIC OVERLAYS (with photo) ────────────────────────────────────────────
 function PhotoOverlayPost({ s, m, showSets, selectedSponsors }) {
+  const sponsorBarH = selectedSponsors.length > 0 ? 80 : 0;
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-end z-10" style={{ pointerEvents: "none", paddingBottom: (40 + (selectedSponsors.length > 0 ? 80 * s : 0)) * s }}>
+    <div className="absolute inset-0 flex flex-col items-center justify-end z-10" style={{ pointerEvents: "none", paddingBottom: (40 + sponsorBarH) * s }}>
       <div style={{ position: "absolute", top: 20 * s, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.6)", borderRadius: "50%", width: 90 * s, height: 90 * s, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <span style={{ color: "#fff", fontSize: 12 * s, fontWeight: 700 }}>LIGA</span></div>
       <div style={{ position: "absolute", top: 130 * s, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.5)", padding: `${4 * s}px ${20 * s}px`, borderRadius: 12 * s }}>
@@ -101,8 +102,9 @@ function PhotoOverlayPost({ s, m, showSets, selectedSponsors }) {
     </div>);
 }
 function PhotoOverlayStory({ s, m, showSets, selectedSponsors }) {
+  const sponsorBarH = selectedSponsors.length > 0 ? 100 : 0;
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-end z-10" style={{ pointerEvents: "none", paddingBottom: (80 + (selectedSponsors.length > 0 ? 100 * s : 0)) * s }}>
+    <div className="absolute inset-0 flex flex-col items-center justify-end z-10" style={{ pointerEvents: "none", paddingBottom: (80 + sponsorBarH) * s }}>
       <div style={{ position: "absolute", top: 60 * s, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.6)", borderRadius: "50%", width: 120 * s, height: 120 * s, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <span style={{ color: "#fff", fontSize: 16 * s, fontWeight: 700 }}>LIGA</span></div>
       <div style={{ position: "absolute", top: 210 * s, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.5)", padding: `${6 * s}px ${24 * s}px`, borderRadius: 16 * s }}>
@@ -199,7 +201,7 @@ function SplitPanelOverlayStory({ s, m, selectedSponsors }) {
         {selectedSponsors.map((url, i) => <img key={i} src={url} alt="" style={{ height: 52 * s, maxWidth: 120 * s, objectFit: "contain", filter: "brightness(0) invert(1)", opacity: 0.7 }} />)}</div>)}</div>);
 }
 
-// ── SPLIT PANEL OVERLAYS — PREVIEW (zapowiedź) ──────────────────────────────
+// ── SPLIT PANEL OVERLAYS — PREVIEW ───────────────────────────────────────────
 function SplitPanelPreviewPost({ s, m, selectedSponsors }) {
   const panelW = 0.42; const sponsorBarH = selectedSponsors.length > 0 ? 80 : 0; const panelPadBottom = 28 + sponsorBarH;
   const homeNameFs = m.team_home.length > 14 ? 18 : 22; const awayNameFs = m.team_away.length > 14 ? 18 : 22;
@@ -262,11 +264,16 @@ function SplitPanelPreviewStory({ s, m, selectedSponsors }) {
 }
 
 // ── NO-PHOTO VARIANTS ────────────────────────────────────────────────────────
-function NoPhotoPost({ s, m }) {
+// showSets: OFF = no sets at all, ON = set table (post) / score rows (story)
+// selectedSponsors: shown at bottom bar
+function NoPhotoPost({ s, m, showSets, selectedSponsors }) {
   const isPreview = m.mode === "preview";
+  const sponsorBarH = selectedSponsors.length > 0 ? 80 : 0;
   return (
     <div className="absolute inset-0" style={{ background: `linear-gradient(180deg, ${m.color_liga} 0%, #001533 100%)` }}>
-      <div className="absolute inset-0 flex flex-col items-center justify-center z-10" style={{ pointerEvents: "none", gap: 12 * s }}>
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6 * s, background: `linear-gradient(90deg, ${m.color_home}, ${m.color_liga}, ${m.color_away})` }} />
+      <div style={{ position: "absolute", bottom: sponsorBarH * s, left: 0, right: 0, height: 6 * s, background: `linear-gradient(90deg, ${m.color_home}, ${m.color_liga}, ${m.color_away})` }} />
+      <div className="absolute inset-0 flex flex-col items-center justify-center z-10" style={{ pointerEvents: "none", gap: 12 * s, paddingBottom: sponsorBarH * s }}>
         <LigaLogo s={s} m={m} size={90} light />
         <KolejkaBadge s={s} m={m} fontSize={22} light />
         <div className="flex items-center justify-center" style={{ gap: 32 * s, marginTop: 10 * s }}>
@@ -277,13 +284,19 @@ function NoPhotoPost({ s, m }) {
           <div style={{ textAlign: "center", marginTop: 10 * s }}>
             <div style={{ fontSize: 28 * s, fontWeight: 700, color: "#fff" }}>{m.data_meczu} • {m.godzina}</div>
             <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 18 * s, marginTop: 4 * s }}>{m.miejsce}</div></div>
-        ) : <SetTable s={s} m={m} />}</div></div>);
+        ) : (showSets && <SetTable s={s} m={m} />)}</div>
+      {selectedSponsors.length > 0 && (
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 80 * s, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 * s, zIndex: 20 }}>
+          {selectedSponsors.map((url, i) => <img key={i} src={url} alt="" style={{ height: 42 * s, maxWidth: 120 * s, objectFit: "contain", filter: "brightness(0) invert(1)" }} />)}</div>)}</div>);
 }
-function NoPhotoStory({ s, m }) {
+function NoPhotoStory({ s, m, showSets, selectedSponsors }) {
   const isPreview = m.mode === "preview";
+  const sponsorBarH = selectedSponsors.length > 0 ? 100 : 0;
   return (
     <div className="absolute inset-0" style={{ background: `linear-gradient(180deg, ${m.color_liga} 0%, #001533 40%, #001533 100%)` }}>
-      <div className="absolute inset-0 flex flex-col items-center justify-evenly z-10" style={{ pointerEvents: "none", paddingTop: 20 * s, paddingBottom: 20 * s }}>
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6 * s, background: `linear-gradient(90deg, ${m.color_home}, ${m.color_liga}, ${m.color_away})` }} />
+      <div style={{ position: "absolute", bottom: sponsorBarH * s, left: 0, right: 0, height: 6 * s, background: `linear-gradient(90deg, ${m.color_home}, ${m.color_liga}, ${m.color_away})` }} />
+      <div className="absolute inset-0 flex flex-col items-center justify-evenly z-10" style={{ pointerEvents: "none", paddingTop: 20 * s, paddingBottom: (20 + sponsorBarH) * s }}>
         <div className="flex flex-col items-center" style={{ gap: 12 * s }}>
           <LigaLogo s={s} m={m} size={120} light />
           <KolejkaBadge s={s} m={m} fontSize={28} light /></div>
@@ -291,15 +304,18 @@ function NoPhotoStory({ s, m }) {
         {isPreview ? (
           <span style={{ fontSize: 180 * s, fontWeight: 900, color: "#fff", lineHeight: 1, letterSpacing: 8 * s }}>VS</span>
         ) : (<>
-          <div className="flex justify-center" style={{ gap: 20 * s }}>
-            {m.set_scores.map((sc, i) => { const won = sc.home > sc.away; return <span key={i} style={{ fontSize: 48 * s, color: won ? m.color_home : m.color_home + '66', fontWeight: won ? 800 : 400, minWidth: 60 * s, textAlign: "center", display: "inline-block" }}>{sc.home}</span>; })}</div>
+          {showSets && <div className="flex justify-center" style={{ gap: 20 * s }}>
+            {m.set_scores.map((sc, i) => { const won = sc.home > sc.away; return <span key={i} style={{ fontSize: 48 * s, color: won ? m.color_home : m.color_home + '66', fontWeight: won ? 800 : 400, minWidth: 60 * s, textAlign: "center", display: "inline-block" }}>{sc.home}</span>; })}</div>}
           <span style={{ fontSize: 180 * s, fontWeight: 900, color: "#fff", lineHeight: 1, letterSpacing: 8 * s }}>{m.sets_home} : {m.sets_away}</span>
-          <div className="flex justify-center" style={{ gap: 20 * s }}>
-            {m.set_scores.map((sc, i) => { const won = sc.away > sc.home; return <span key={i} style={{ fontSize: 48 * s, color: won ? m.color_away : m.color_away + '66', fontWeight: won ? 800 : 400, minWidth: 60 * s, textAlign: "center", display: "inline-block" }}>{sc.away}</span>; })}</div></>)}
+          {showSets && <div className="flex justify-center" style={{ gap: 20 * s }}>
+            {m.set_scores.map((sc, i) => { const won = sc.away > sc.home; return <span key={i} style={{ fontSize: 48 * s, color: won ? m.color_away : m.color_away + '66', fontWeight: won ? 800 : 400, minWidth: 60 * s, textAlign: "center", display: "inline-block" }}>{sc.away}</span>; })}</div>}</>)}
         <TeamCircle s={s} m={m} team="away" size={200} fontSize={30} light />
         {isPreview && (<div style={{ textAlign: "center" }}>
           <div style={{ fontSize: 48 * s, fontWeight: 700, color: "#fff", letterSpacing: 2 }}>{m.data_meczu} • {m.godzina}</div>
-          <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 28 * s, marginTop: 6 * s }}>{m.miejsce}</div></div>)}</div></div>);
+          <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 28 * s, marginTop: 6 * s }}>{m.miejsce}</div></div>)}</div>
+      {selectedSponsors.length > 0 && (
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 100 * s, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 * s, zIndex: 20 }}>
+          {selectedSponsors.map((url, i) => <img key={i} src={url} alt="" style={{ height: 52 * s, maxWidth: 140 * s, objectFit: "contain", filter: "brightness(0) invert(1)" }} />)}</div>)}</div>);
 }
 
 // ── SHARED COMPONENTS ────────────────────────────────────────────────────────
@@ -360,7 +376,7 @@ function PreviewPanel({ label, targetW, targetH, image, imageNat, zoom, bgPos, s
   const onUp = () => { setDragging(false); setDragStart(null); };
 
   function renderOverlay() {
-    if (!image) return isStory ? <NoPhotoStory s={s} m={m} /> : <NoPhotoPost s={s} m={m} />;
+    if (!image) return isStory ? <NoPhotoStory s={s} m={m} showSets={showSets} selectedSponsors={selectedSponsors} /> : <NoPhotoPost s={s} m={m} showSets={showSets} selectedSponsors={selectedSponsors} />;
     if (m.mode === "preview") return isStory ? <SplitPanelPreviewStory s={s} m={m} selectedSponsors={selectedSponsors} /> : <SplitPanelPreviewPost s={s} m={m} selectedSponsors={selectedSponsors} />;
     if (graphicStyle === "split_panel") return isStory ? <SplitPanelOverlayStory s={s} m={m} selectedSponsors={selectedSponsors} /> : <SplitPanelOverlayPost s={s} m={m} selectedSponsors={selectedSponsors} />;
     return isStory ? <PhotoOverlayStory s={s} m={m} showSets={showSets} selectedSponsors={selectedSponsors} /> : <PhotoOverlayPost s={s} m={m} showSets={showSets} selectedSponsors={selectedSponsors} />;
@@ -402,12 +418,16 @@ export default function PhotoEditor() {
   const isPreview = m.mode === "preview";
   const availableStyles = isPreview ? STYLES_PREVIEW : STYLES_RESULT;
   const [graphicStyle, setGraphicStyle] = useState(isPreview ? "split_panel" : "classic");
+
   const [postImage, setPostImage] = useState(null); const [postImageNat, setPostImageNat] = useState({ w: 0, h: 0 });
   const [postZoom, setPostZoom] = useState(150); const [postBgPos, setPostBgPos] = useState("0px 0px");
-  const [postShowSets, setPostShowSets] = useState(false); const [postSponsors, setPostSponsors] = useState([]);
   const [storyImage, setStoryImage] = useState(null); const [storyImageNat, setStoryImageNat] = useState({ w: 0, h: 0 });
   const [storyZoom, setStoryZoom] = useState(150); const [storyBgPos, setStoryBgPos] = useState("0px 0px");
-  const [storyShowSets, setStoryShowSets] = useState(false); const [storySponsors, setStorySponsors] = useState([]);
+
+  // Shared controls
+  const [showSets, setShowSets] = useState(false);
+  const [selectedSponsors, setSelectedSponsors] = useState([]);
+
   const [status, setStatus] = useState(null);
   const [resultUrls, setResultUrls] = useState(null);
 
@@ -422,13 +442,10 @@ export default function PhotoEditor() {
     if (isDev) { alert("Tryb deweloperski — otwórz edytor przez link z n8n."); return; }
     setStatus("sending");
     setResultUrls(null);
- 
+
     const hasAnyPhoto = postImage || storyImage;
- 
-    // Jeśli brak zdjęć → mode: classic (renderuje gradient bez foto)
-    // Jeśli jest zdjęcie → mode: result/preview (jak dotychczas)
     const effectiveMode = !hasAnyPhoto ? 'classic' : m.mode;
- 
+
     const payload = {
       match_id: m.match_id,
       played_sets: m.set_scores,
@@ -444,44 +461,41 @@ export default function PhotoEditor() {
       data_meczu: m.data_meczu,
       godzina: m.godzina,
       miejsce: m.miejsce,
-      // Dla classic (bez zdjęć): przekaż sponsorów i set_points w body
-      sponsorzy: !hasAnyPhoto ? postSponsors.join(',') : '',
-      set_points: !hasAnyPhoto ? postShowSets : false,
+      sponsorzy: !hasAnyPhoto ? selectedSponsors.join(',') : '',
+      set_points: !hasAnyPhoto ? showSets : false,
       submitted_by: '',
-      // Dla foto: przekaż post/story z base64
       post: postImage ? {
         photo_base64: postImage,
         photo_position: pxToPercent(postBgPos, postZoom, 1080, 1080, 340, postImageNat.w, postImageNat.h),
         photo_zoom: `${postZoom}%`,
-        show_sets: postShowSets,
-        sponsorzy: postSponsors,
+        show_sets: showSets,
+        sponsorzy: selectedSponsors,
         style: isPreview ? "preview" : graphicStyle,
       } : (!hasAnyPhoto ? {
-        // Classic bez zdjęcia — Renderer potrzebuje post/story z style:'classic' i pustym photo
         style: 'classic',
         photo_base64: '',
         photo_position: '50% 50%',
         photo_zoom: '150%',
-        show_sets: postShowSets,
-        sponsorzy: postSponsors,
+        show_sets: showSets,
+        sponsorzy: selectedSponsors,
       } : null),
       story: storyImage ? {
         photo_base64: storyImage,
         photo_position: pxToPercent(storyBgPos, storyZoom, 1080, 1920, 190, storyImageNat.w, storyImageNat.h),
         photo_zoom: `${storyZoom}%`,
-        show_sets: storyShowSets,
-        sponsorzy: storySponsors,
+        show_sets: showSets,
+        sponsorzy: selectedSponsors,
         style: isPreview ? "preview" : graphicStyle,
       } : (!hasAnyPhoto ? {
         style: 'classic',
         photo_base64: '',
         photo_position: '50% 50%',
         photo_zoom: '150%',
-        show_sets: storyShowSets,
-        sponsorzy: storySponsors,
+        show_sets: showSets,
+        sponsorzy: selectedSponsors,
       } : null),
     };
- 
+
     try {
       const res = await fetch(N8N_WEBHOOK_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -498,57 +512,80 @@ export default function PhotoEditor() {
   return (
     <div className="flex flex-col items-center gap-3 p-3 max-w-5xl mx-auto">
       <div className="text-center">
-        <h2 style={{ fontSize: 16, fontWeight: 500, color: "var(--color-text-primary, #222)", margin: 0 }}>{isPreview ? "Edytor zapowiedzi meczu" : "Edytor zdjęcia meczu"}</h2>
-        <p style={{ fontSize: 11, color: isDev ? "#f59e0b" : "var(--color-text-secondary, #888)", marginTop: 4 }}>{isDev ? "⚠️ Tryb deweloperski — brak parametrów w URL" : headerText}</p></div>
+        <h2 style={{ fontSize: 16, fontWeight: 500, color: "var(--color-text-primary, #222)", margin: 0 }}>
+          {isPreview ? "Edytor zapowiedzi meczu" : "Edytor grafiki meczu"}
+        </h2>
+        <p style={{ fontSize: 11, color: isDev ? "#f59e0b" : "var(--color-text-secondary, #888)", marginTop: 4 }}>
+          {isDev ? "⚠️ Tryb deweloperski — brak parametrów w URL" : headerText}
+        </p>
+      </div>
+
       <StyleSelector styles={availableStyles} value={graphicStyle} onChange={setGraphicStyle} />
+
+      {/* ── Preview panels ── */}
       <div className="flex gap-6 flex-wrap justify-center items-start">
-        <div className="flex flex-col items-center gap-2">
-          <PreviewPanel label="Post 1080×1080" targetW={1080} targetH={1080} image={postImage} imageNat={postImageNat} zoom={postZoom} bgPos={postBgPos} setBgPos={setPostBgPos}
-            onUpload={loadImage((src, nat, initPos) => { setPostImage(src); setPostImageNat(nat); setPostZoom(150); setPostBgPos(initPos); }, 1080, 1080, 340)}
-            onRemove={() => { setPostImage(null); setPostImageNat({ w: 0, h: 0 }); setPostZoom(150); setPostBgPos("0px 0px"); }}
-            m={m} maxPreviewW={340} showSets={postShowSets} selectedSponsors={postSponsors}
-            onZoomChange={(z) => { setPostBgPos(prev => rescaleBgPos(prev, postZoom, z, 1080, 1080, 340, postImageNat.w, postImageNat.h)); setPostZoom(z); }} graphicStyle={graphicStyle} />
-          {!isPreview && graphicStyle === "classic" && (
-            <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", userSelect: "none" }}>
-              <div onClick={() => setPostShowSets(v => !v)} style={{ width: 36, height: 20, borderRadius: 10, background: postShowSets ? "#2563eb" : "#374151", position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
-                <div style={{ position: "absolute", top: 2, left: postShowSets ? 18 : 2, width: 16, height: 16, borderRadius: "50%", background: "#fff", transition: "left 0.2s" }} /></div>
-              <span style={{ fontSize: 11, color: "var(--color-text-secondary, #888)" }}>Sety</span></label>)}
-          <SponsorsSelector sponsorzy={m.sponsorzy} selected={postSponsors} setSelected={setPostSponsors} /></div>
-        <div className="flex flex-col items-center gap-2">
-          <PreviewPanel label="Story 1080×1920" targetW={1080} targetH={1920} image={storyImage} imageNat={storyImageNat} zoom={storyZoom} bgPos={storyBgPos} setBgPos={setStoryBgPos}
-            onUpload={loadImage((src, nat, initPos) => { setStoryImage(src); setStoryImageNat(nat); setStoryZoom(150); setStoryBgPos(initPos); }, 1080, 1920, 190)}
-            onRemove={() => { setStoryImage(null); setStoryImageNat({ w: 0, h: 0 }); setStoryZoom(150); setStoryBgPos("0px 0px"); }}
-            m={m} maxPreviewW={190} showSets={storyShowSets} selectedSponsors={storySponsors}
-            onZoomChange={(z) => { setStoryBgPos(prev => rescaleBgPos(prev, storyZoom, z, 1080, 1920, 190, storyImageNat.w, storyImageNat.h)); setStoryZoom(z); }} graphicStyle={graphicStyle} />
-          {!isPreview && graphicStyle === "classic" && (
-            <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", userSelect: "none" }}>
-              <div onClick={() => setStoryShowSets(v => !v)} style={{ width: 36, height: 20, borderRadius: 10, background: storyShowSets ? "#2563eb" : "#374151", position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
-                <div style={{ position: "absolute", top: 2, left: storyShowSets ? 18 : 2, width: 16, height: 16, borderRadius: "50%", background: "#fff", transition: "left 0.2s" }} /></div>
-              <span style={{ fontSize: 11, color: "var(--color-text-secondary, #888)" }}>Sety</span></label>)}
-          <SponsorsSelector sponsorzy={m.sponsorzy} selected={storySponsors} setSelected={setStorySponsors} /></div></div>
+        <PreviewPanel label="Post 1080×1080" targetW={1080} targetH={1080} image={postImage} imageNat={postImageNat} zoom={postZoom} bgPos={postBgPos} setBgPos={setPostBgPos}
+          onUpload={loadImage((src, nat, initPos) => { setPostImage(src); setPostImageNat(nat); setPostZoom(150); setPostBgPos(initPos); }, 1080, 1080, 340)}
+          onRemove={() => { setPostImage(null); setPostImageNat({ w: 0, h: 0 }); setPostZoom(150); setPostBgPos("0px 0px"); }}
+          m={m} maxPreviewW={340} showSets={showSets} selectedSponsors={selectedSponsors}
+          onZoomChange={(z) => { setPostBgPos(prev => rescaleBgPos(prev, postZoom, z, 1080, 1080, 340, postImageNat.w, postImageNat.h)); setPostZoom(z); }} graphicStyle={graphicStyle} />
+        <PreviewPanel label="Story 1080×1920" targetW={1080} targetH={1920} image={storyImage} imageNat={storyImageNat} zoom={storyZoom} bgPos={storyBgPos} setBgPos={setStoryBgPos}
+          onUpload={loadImage((src, nat, initPos) => { setStoryImage(src); setStoryImageNat(nat); setStoryZoom(150); setStoryBgPos(initPos); }, 1080, 1920, 190)}
+          onRemove={() => { setStoryImage(null); setStoryImageNat({ w: 0, h: 0 }); setStoryZoom(150); setStoryBgPos("0px 0px"); }}
+          m={m} maxPreviewW={190} showSets={showSets} selectedSponsors={selectedSponsors}
+          onZoomChange={(z) => { setStoryBgPos(prev => rescaleBgPos(prev, storyZoom, z, 1080, 1920, 190, storyImageNat.w, storyImageNat.h)); setStoryZoom(z); }} graphicStyle={graphicStyle} />
+      </div>
+
+      {/* ── Shared controls BELOW panels ── */}
+      {!isPreview && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%", maxWidth: 600, background: "rgba(0,0,0,0.04)", borderRadius: 12, padding: "12px 16px" }}>
+          <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", userSelect: "none" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 16 }}>📊</span>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 500, color: "var(--color-text-primary, #333)" }}>Małe punkty (sety)</div>
+                <div style={{ fontSize: 10, color: "var(--color-text-secondary, #888)" }}>Pokaż wyniki setów na grafice</div>
+              </div>
+            </div>
+            <div onClick={(e) => { e.preventDefault(); setShowSets(v => !v); }}
+              style={{ width: 42, height: 24, borderRadius: 12, background: showSets ? "#2563eb" : "#374151", position: "relative", transition: "background 0.2s", flexShrink: 0, cursor: "pointer" }}>
+              <div style={{ position: "absolute", top: 3, left: showSets ? 21 : 3, width: 18, height: 18, borderRadius: "50%", background: "#fff", transition: "left 0.2s" }} />
+            </div>
+          </label>
+          {m.sponsorzy.length > 0 && (
+            <SponsorsSelector sponsorzy={m.sponsorzy} selected={selectedSponsors} setSelected={setSelectedSponsors} />
+          )}
+        </div>
+      )}
+
+      {/* ── Generate button ── */}
       <button onClick={generateGraphics} disabled={status === "sending"} className="px-6 py-3 rounded-lg text-sm font-bold text-white"
         style={{ marginTop: 8, minWidth: 200, border: "none", cursor: status === "sending" ? "not-allowed" : "pointer",
           background: status === "sending" ? "#6b7280" : status === "ok" ? "#059669" : status === "error" ? "#dc2626" : "#2563eb" }}>
-        {status === "sending" ? "⏳ Wysyłanie…" : status === "ok" ? "✅ Wysłano! Grafiki za chwilę w arkuszu." : status === "error" ? "❌ Błąd — spróbuj ponownie" : isPreview ? "🚀 Generuj zapowiedź" : "🚀 Generuj grafiki"}</button>
+        {status === "sending" ? "⏳ Generuję…" : status === "ok" ? "✅ Gotowe!" : status === "error" ? "❌ Błąd — spróbuj ponownie" : "🚀 Generuj grafiki"}
+      </button>
+
+      {/* ── Result thumbnails ── */}
       {resultUrls && (resultUrls.post || resultUrls.story) && (
-  <div style={{ marginTop: 16, padding: "16px 20px", background: "rgba(5,150,105,0.1)", borderRadius: 12, border: "1px solid rgba(5,150,105,0.3)" }}>
-    <p style={{ fontSize: 12, fontWeight: 600, color: "#059669", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12, textAlign: "center" }}>Gotowe! Kliknij żeby otworzyć</p>
-    <div style={{ display: "flex", gap: 16, justifyContent: "center" }}>
-      {resultUrls.post && (
-        <a href={resultUrls.post} target="_blank" rel="noopener noreferrer" style={{ textAlign: "center", textDecoration: "none" }}>
-          <img src={resultUrls.post} alt="Post" style={{ width: 160, height: 160, objectFit: "cover", borderRadius: 8, border: "2px solid #059669" }} />
-          <div style={{ fontSize: 11, color: "#059669", marginTop: 6, fontWeight: 600 }}>📥 Post 1080×1080</div>
-        </a>
+        <div style={{ marginTop: 16, padding: "16px 20px", background: "rgba(5,150,105,0.1)", borderRadius: 12, border: "1px solid rgba(5,150,105,0.3)" }}>
+          <p style={{ fontSize: 12, fontWeight: 600, color: "#059669", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12, textAlign: "center" }}>Gotowe! Kliknij żeby otworzyć</p>
+          <div style={{ display: "flex", gap: 16, justifyContent: "center" }}>
+            {resultUrls.post && (
+              <a href={resultUrls.post} target="_blank" rel="noopener noreferrer" style={{ textAlign: "center", textDecoration: "none" }}>
+                <img src={resultUrls.post} alt="Post" style={{ width: 160, height: 160, objectFit: "cover", borderRadius: 8, border: "2px solid #059669" }} />
+                <div style={{ fontSize: 11, color: "#059669", marginTop: 6, fontWeight: 600 }}>📥 Post 1080×1080</div>
+              </a>)}
+            {resultUrls.story && (
+              <a href={resultUrls.story} target="_blank" rel="noopener noreferrer" style={{ textAlign: "center", textDecoration: "none" }}>
+                <img src={resultUrls.story} alt="Story" style={{ width: 90, height: 160, objectFit: "cover", borderRadius: 8, border: "2px solid #059669" }} />
+                <div style={{ fontSize: 11, color: "#059669", marginTop: 6, fontWeight: 600 }}>📥 Story 1080×1920</div>
+              </a>)}
+          </div>
+          <p style={{ fontSize: 10, color: "#6b7280", marginTop: 8, textAlign: "center" }}>Przytrzymaj obrazek żeby zapisać na telefonie</p>
+        </div>
       )}
-      {resultUrls.story && (
-        <a href={resultUrls.story} target="_blank" rel="noopener noreferrer" style={{ textAlign: "center", textDecoration: "none" }}>
-          <img src={resultUrls.story} alt="Story" style={{ width: 90, height: 160, objectFit: "cover", borderRadius: 8, border: "2px solid #059669" }} />
-          <div style={{ fontSize: 11, color: "#059669", marginTop: 6, fontWeight: 600 }}>📥 Story 1080×1920</div>
-        </a>
-      )}
+
+      {status === "error" && <p style={{ fontSize: 11, color: "#dc2626", textAlign: "center" }}>Sprawdź czy workflow w n8n jest aktywny (Production).</p>}
     </div>
-    <p style={{ fontSize: 10, color: "#6b7280", marginTop: 8, textAlign: "center" }}>Przytrzymaj obrazek żeby zapisać na telefonie</p>
-  </div>
-)}
-      {status === "error" && <p style={{ fontSize: 11, color: "#dc2626", textAlign: "center" }}>Sprawdź czy workflow w n8n jest aktywny (Production).</p>}</div>);
+  );
 }
