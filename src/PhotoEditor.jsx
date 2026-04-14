@@ -419,31 +419,52 @@ export default function PhotoEditor() {
       img.src = src; }; reader.readAsDataURL(file); }, []);
 
   const generateGraphics = async () => {
-    //if (!postImage && !storyImage) { alert("Wgraj przynajmniej jedno zdjęcie."); return; }
     if (isDev) { alert("Tryb deweloperski — otwórz edytor przez link z n8n."); return; }
     setStatus("sending");
     setResultUrls(null);
+ 
+    const hasAnyPhoto = postImage || storyImage;
+ 
+    // Jeśli brak zdjęć → mode: classic (renderuje gradient bez foto)
+    // Jeśli jest zdjęcie → mode: result/preview (jak dotychczas)
+    const effectiveMode = !hasAnyPhoto ? 'classic' : m.mode;
+ 
     const payload = {
       match_id: m.match_id,
-  played_sets: m.set_scores,
-  mode: m.mode,
-  team_home: m.team_home,
-  team_away: m.team_away,
-  kolejka: m.kolejka,
-  color_home: m.color_home,
-  color_away: m.color_away,
-  color_liga: m.color_liga,
-  data_meczu: m.data_meczu,
-  godzina: m.godzina,
-  miejsce: m.miejsce,
-  post: postImage ? {
+      played_sets: m.set_scores,
+      mode: effectiveMode,
+      team_home: m.team_home,
+      team_away: m.team_away,
+      wynik: m.sets_home + ':' + m.sets_away,
+      sety: m.set_scores.map(s => s.home + ':' + s.away).join(','),
+      kolejka: m.kolejka,
+      color_home: m.color_home,
+      color_away: m.color_away,
+      color_liga: m.color_liga,
+      data_meczu: m.data_meczu,
+      godzina: m.godzina,
+      miejsce: m.miejsce,
+      // Dla classic (bez zdjęć): przekaż sponsorów i set_points w body
+      sponsorzy: !hasAnyPhoto ? postSponsors.join(',') : '',
+      set_points: !hasAnyPhoto ? postShowSets : false,
+      submitted_by: '',
+      // Dla foto: przekaż post/story z base64
+      post: postImage ? {
         photo_base64: postImage,
         photo_position: pxToPercent(postBgPos, postZoom, 1080, 1080, 340, postImageNat.w, postImageNat.h),
         photo_zoom: `${postZoom}%`,
         show_sets: postShowSets,
         sponsorzy: postSponsors,
         style: isPreview ? "preview" : graphicStyle,
-      } : null,
+      } : (!hasAnyPhoto ? {
+        // Classic bez zdjęcia — Renderer potrzebuje post/story z style:'classic' i pustym photo
+        style: 'classic',
+        photo_base64: '',
+        photo_position: '50% 50%',
+        photo_zoom: '150%',
+        show_sets: postShowSets,
+        sponsorzy: postSponsors,
+      } : null),
       story: storyImage ? {
         photo_base64: storyImage,
         photo_position: pxToPercent(storyBgPos, storyZoom, 1080, 1920, 190, storyImageNat.w, storyImageNat.h),
@@ -451,13 +472,22 @@ export default function PhotoEditor() {
         show_sets: storyShowSets,
         sponsorzy: storySponsors,
         style: isPreview ? "preview" : graphicStyle,
-      } : null,
+      } : (!hasAnyPhoto ? {
+        style: 'classic',
+        photo_base64: '',
+        photo_position: '50% 50%',
+        photo_zoom: '150%',
+        show_sets: storyShowSets,
+        sponsorzy: storySponsors,
+      } : null),
     };
-    try { const res = await fetch(N8N_WEBHOOK_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+ 
+    try {
+      const res = await fetch(N8N_WEBHOOK_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        setStatus("ok");
-        setResultUrls({ post: data.grafika_post || '', story: data.grafika_story || '' });
+      const data = await res.json();
+      setStatus("ok");
+      setResultUrls({ post: data.grafika_post || '', story: data.grafika_story || '' });
     } catch (err) { console.error(err); setStatus("error"); }
   };
 
