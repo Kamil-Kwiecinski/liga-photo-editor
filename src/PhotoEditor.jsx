@@ -10,15 +10,29 @@ const STYLES_PREVIEW = [
   { id: "split_panel", label: "Split Panel" },
 ];
 
+function parseScorers(raw) {
+  if (!raw) return [];
+  return raw.split(",").filter(Boolean).map(s => {
+    const [name, minute] = s.split(":");
+    return { name: (name || "").trim(), minute: Number(minute) || 0 };
+  });
+}
+
 function getMatchFromURL() {
   const p = new URLSearchParams(window.location.search);
   const mode = p.get("mode") || "result";
+  const sport = p.get("sport") || "volleyball";
+  const grupa = p.get("grupa") || "";
   if (!p.get("match_id")) {
     return {
-      match_id: "DEV", mode,
+      match_id: "DEV", mode, sport: "football", grupa: "Grupa A",
       team_home: "Iskra Lubań", team_away: "Turbo Ślimaki",
       sets_home: 3, sets_away: 0,
       set_scores: [{ home: 25, away: 22 }, { home: 25, away: 15 }, { home: 25, away: 10 }],
+      goals_home: 3, goals_away: 2,
+      half_home: 2, half_away: 1,
+      scorers_home: [{ name: "Kowalski", minute: 12 }, { name: "Nowak", minute: 45 }, { name: "Wiśniewski", minute: 78 }],
+      scorers_away: [{ name: "Lewandowski", minute: 23 }, { name: "Zieliński", minute: 67 }],
       kolejka: "Ćwierćfinały",
       color_home: "#d4ba0f", color_away: "#fc77c2", color_liga: "#004aad",
       sponsorzy: [],
@@ -31,10 +45,18 @@ function getMatchFromURL() {
   const set_scores = setyRaw ? setyRaw.split(",").map(s => { const [h, a] = s.split(":").map(Number); return { home: h || 0, away: a || 0 }; }) : [];
   const sponsorzyRaw = p.get("sponsorzy") || "";
   const sponsorzy = sponsorzyRaw ? sponsorzyRaw.split(",").filter(Boolean) : [];
+  const goalsRaw = p.get("goals") || "0:0";
+  const [gh, ga] = goalsRaw.split(":").map(Number);
+  const przerwaRaw = p.get("przerwa") || "0:0";
+  const [hh, ha] = przerwaRaw.split(":").map(Number);
   return {
-    match_id: p.get("match_id"), mode,
+    match_id: p.get("match_id"), mode, sport, grupa,
     team_home: p.get("team_home") || "Drużyna A", team_away: p.get("team_away") || "Drużyna B",
     sets_home: sh || 0, sets_away: sa || 0, set_scores,
+    goals_home: gh || 0, goals_away: ga || 0,
+    half_home: hh || 0, half_away: ha || 0,
+    scorers_home: parseScorers(p.get("strzelcy_home") || ""),
+    scorers_away: parseScorers(p.get("strzelcy_away") || ""),
     kolejka: p.get("kolejka") || "",
     color_home: p.get("color_home") || "#1a56db", color_away: p.get("color_away") || "#dc2626", color_liga: p.get("color_liga") || "#004aad",
     sponsorzy,
@@ -73,6 +95,157 @@ function rescaleBgPos(bgPos, oldZoom, newZoom, targetW, targetH, previewW, natW,
   const newPx = (oldImg.imgW - previewW) > 0 ? (oldPx / (oldImg.imgW - previewW)) * (newImg.imgW - previewW) : -((newImg.imgW - previewW) * 0.5);
   const newPy = (oldImg.imgH - previewH) > 0 ? (oldPy / (oldImg.imgH - previewH)) * (newImg.imgH - previewH) : -((newImg.imgH - previewH) * 0.5);
   return `${newPx.toFixed(0)}px ${newPy.toFixed(0)}px`;
+}
+
+// ── FOOTBALL OVERLAYS ────────────────────────────────────────────────────────
+function ScorersBlock({ s, m, size, side, center }) {
+  const list = side === "home" ? (m.scorers_home || []) : (m.scorers_away || []);
+  if (!list.length) return null;
+  const align = center ? "center" : (side === "home" ? "right" : "left");
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: (size * 0.25) * s, textAlign: align, minWidth: 120 * s }}>
+      {list.map((sc, i) => (
+        <div key={i} style={{ color: "#fff", fontSize: size * s, fontWeight: 600, textShadow: `0 ${1 * s}px ${4 * s}px rgba(0,0,0,0.6)`, whiteSpace: "nowrap" }}>
+          {side === "away" && <span style={{ marginRight: (size * 0.35) * s }}>⚽</span>}
+          <span>{sc.name} <span style={{ opacity: 0.7, fontWeight: 400 }}>{sc.minute}'</span></span>
+          {side === "home" && <span style={{ marginLeft: (size * 0.35) * s }}>⚽</span>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function FootballPhotoPost({ s, m, selectedSponsors }) {
+  const sponsorBarH = selectedSponsors.length > 0 ? 80 : 0;
+  return (
+    <div className="absolute inset-0 z-10" style={{ pointerEvents: "none" }}>
+      <div style={{ position: "absolute", top: 20 * s, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.6)", borderRadius: "50%", width: 90 * s, height: 90 * s, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <span style={{ color: "#fff", fontSize: 12 * s, fontWeight: 700 }}>LIGA</span></div>
+      <div style={{ position: "absolute", top: 130 * s, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.55)", padding: `${5 * s}px ${20 * s}px`, borderRadius: 12 * s, display: "flex", gap: 10 * s, alignItems: "center" }}>
+        {m.grupa && <span style={{ color: "#fff", fontSize: 18 * s, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>{m.grupa}</span>}
+        {m.grupa && m.kolejka && <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 16 * s }}>·</span>}
+        {m.kolejka && <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 18 * s, fontWeight: 500, letterSpacing: 2, textTransform: "uppercase" }}>{m.kolejka}</span>}
+      </div>
+      <div style={{ position: "absolute", top: "42%", left: 0, right: 0, transform: "translateY(-50%)", display: "flex", flexDirection: "column", alignItems: "center", gap: 8 * s }}>
+        <div className="flex items-center justify-center" style={{ gap: 24 * s }}>
+          <div className="flex flex-col items-center" style={{ width: 200 * s }}>
+            <div style={{ width: 100 * s, height: 100 * s, borderRadius: "50%", background: "rgba(0,0,0,0.4)", border: `${3 * s}px solid ${m.color_home}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ color: m.color_home, fontSize: 32 * s, fontWeight: 800 }}>{m.team_home.charAt(0)}</span></div>
+            <span style={{ background: m.color_home, color: "#0d1117", fontSize: 18 * s, fontWeight: 700, padding: `${4 * s}px ${14 * s}px`, borderRadius: 10 * s, marginTop: 10 * s, textAlign: "center" }}>{m.team_home}</span></div>
+          <span style={{ fontSize: 100 * s, fontWeight: 900, color: "#fff", lineHeight: 1, letterSpacing: 4 * s, textShadow: `0 ${2 * s}px ${12 * s}px rgba(0,0,0,0.6)` }}>{m.goals_home} : {m.goals_away}</span>
+          <div className="flex flex-col items-center" style={{ width: 200 * s }}>
+            <div style={{ width: 100 * s, height: 100 * s, borderRadius: "50%", background: "rgba(0,0,0,0.4)", border: `${3 * s}px solid ${m.color_away}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ color: m.color_away, fontSize: 32 * s, fontWeight: 800 }}>{m.team_away.charAt(0)}</span></div>
+            <span style={{ background: m.color_away, color: "#0d1117", fontSize: 18 * s, fontWeight: 700, padding: `${4 * s}px ${14 * s}px`, borderRadius: 10 * s, marginTop: 10 * s, textAlign: "center" }}>{m.team_away}</span></div>
+        </div>
+        <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 16 * s, fontWeight: 500, letterSpacing: 1 }}>Do przerwy {m.half_home}:{m.half_away}</div>
+      </div>
+      <div style={{ position: "absolute", bottom: (30 + sponsorBarH) * s, left: 24 * s, right: 24 * s, display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16 * s }}>
+        <ScorersBlock s={s} m={m} size={14} side="home" />
+        <ScorersBlock s={s} m={m} size={14} side="away" />
+      </div>
+      {selectedSponsors.length > 0 && (
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 80 * s, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 * s }}>
+          {selectedSponsors.map((url, i) => <img key={i} src={url} alt="" style={{ height: 42 * s, maxWidth: 120 * s, objectFit: "contain", filter: "brightness(0) invert(1)" }} />)}</div>)}
+    </div>);
+}
+
+function FootballPhotoStory({ s, m, selectedSponsors }) {
+  const sponsorBarH = selectedSponsors.length > 0 ? 100 : 0;
+  return (
+    <div className="absolute inset-0 z-10" style={{ pointerEvents: "none" }}>
+      <div style={{ position: "absolute", top: 60 * s, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.6)", borderRadius: "50%", width: 120 * s, height: 120 * s, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <span style={{ color: "#fff", fontSize: 16 * s, fontWeight: 700 }}>LIGA</span></div>
+      <div style={{ position: "absolute", top: 210 * s, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.55)", padding: `${6 * s}px ${24 * s}px`, borderRadius: 16 * s, display: "flex", gap: 12 * s, alignItems: "center" }}>
+        {m.grupa && <span style={{ color: "#fff", fontSize: 24 * s, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>{m.grupa}</span>}
+        {m.grupa && m.kolejka && <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 22 * s }}>·</span>}
+        {m.kolejka && <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 24 * s, fontWeight: 500, letterSpacing: 2, textTransform: "uppercase" }}>{m.kolejka}</span>}
+      </div>
+      <div style={{ position: "absolute", top: "45%", left: 0, right: 0, transform: "translateY(-50%)", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 * s }}>
+        <div className="flex items-center justify-center" style={{ gap: 30 * s }}>
+          <div className="flex flex-col items-center" style={{ width: 230 * s }}>
+            <div style={{ width: 130 * s, height: 130 * s, borderRadius: "50%", background: "rgba(0,0,0,0.4)", border: `${4 * s}px solid ${m.color_home}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ color: m.color_home, fontSize: 42 * s, fontWeight: 800 }}>{m.team_home.charAt(0)}</span></div>
+            <span style={{ background: m.color_home, color: "#0d1117", fontSize: 24 * s, fontWeight: 700, padding: `${6 * s}px ${18 * s}px`, borderRadius: 12 * s, marginTop: 12 * s, textAlign: "center" }}>{m.team_home}</span></div>
+          <span style={{ fontSize: 140 * s, fontWeight: 900, color: "#fff", lineHeight: 1, letterSpacing: 6 * s, textShadow: `0 ${3 * s}px ${16 * s}px rgba(0,0,0,0.6)` }}>{m.goals_home} : {m.goals_away}</span>
+          <div className="flex flex-col items-center" style={{ width: 230 * s }}>
+            <div style={{ width: 130 * s, height: 130 * s, borderRadius: "50%", background: "rgba(0,0,0,0.4)", border: `${4 * s}px solid ${m.color_away}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ color: m.color_away, fontSize: 42 * s, fontWeight: 800 }}>{m.team_away.charAt(0)}</span></div>
+            <span style={{ background: m.color_away, color: "#0d1117", fontSize: 24 * s, fontWeight: 700, padding: `${6 * s}px ${18 * s}px`, borderRadius: 12 * s, marginTop: 12 * s, textAlign: "center" }}>{m.team_away}</span></div>
+        </div>
+        <div style={{ color: "rgba(255,255,255,0.8)", fontSize: 22 * s, fontWeight: 500, letterSpacing: 2 }}>Do przerwy {m.half_home}:{m.half_away}</div>
+      </div>
+      <div style={{ position: "absolute", bottom: (60 + sponsorBarH) * s, left: 40 * s, right: 40 * s, display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 20 * s }}>
+        <ScorersBlock s={s} m={m} size={20} side="home" />
+        <ScorersBlock s={s} m={m} size={20} side="away" />
+      </div>
+      {selectedSponsors.length > 0 && (
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 100 * s, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 * s }}>
+          {selectedSponsors.map((url, i) => <img key={i} src={url} alt="" style={{ height: 52 * s, maxWidth: 140 * s, objectFit: "contain", filter: "brightness(0) invert(1)" }} />)}</div>)}
+    </div>);
+}
+
+function FootballNoPhotoPost({ s, m, selectedSponsors }) {
+  const sponsorBarH = selectedSponsors.length > 0 ? 80 : 0;
+  const grupaKolejka = [m.grupa, m.kolejka].filter(Boolean).join(" · ");
+  return (
+    <div className="absolute inset-0" style={{ background: `linear-gradient(180deg, ${m.color_liga} 0%, #001533 100%)` }}>
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6 * s, background: `linear-gradient(90deg, ${m.color_home}, ${m.color_liga}, ${m.color_away})` }} />
+      <div style={{ position: "absolute", bottom: sponsorBarH * s, left: 0, right: 0, height: 6 * s, background: `linear-gradient(90deg, ${m.color_home}, ${m.color_liga}, ${m.color_away})` }} />
+      <div className="absolute inset-0 flex flex-col items-center z-10" style={{ pointerEvents: "none", paddingTop: 30 * s, paddingBottom: sponsorBarH * s, gap: 10 * s }}>
+        <LigaLogo s={s} m={m} size={70} light />
+        <div style={{ background: "rgba(0,0,0,0.35)", padding: `${6 * s}px ${22 * s}px`, borderRadius: 16 * s }}>
+          <span style={{ color: "#fff", fontSize: 18 * s, fontWeight: 600, letterSpacing: 2, textTransform: "uppercase" }}>{grupaKolejka || "—"}</span>
+        </div>
+        <div className="flex items-center justify-center" style={{ gap: 24 * s, marginTop: 4 * s }}>
+          <TeamCircle s={s} m={m} team="home" size={110} fontSize={20} light />
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <span style={{ fontSize: 96 * s, fontWeight: 900, color: "#fff", lineHeight: 1, letterSpacing: 4 * s }}>{m.goals_home} : {m.goals_away}</span>
+            <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 14 * s, fontWeight: 500, letterSpacing: 1, marginTop: 4 * s }}>Do przerwy {m.half_home}:{m.half_away}</span>
+          </div>
+          <TeamCircle s={s} m={m} team="away" size={110} fontSize={20} light />
+        </div>
+        {(m.scorers_home?.length > 0 || m.scorers_away?.length > 0) && (
+          <div style={{ marginTop: 8 * s, width: "85%", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 * s }}>
+            <div style={{ fontSize: 11 * s, fontWeight: 700, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", letterSpacing: 2 }}>Strzelcy</div>
+            <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "flex-start", gap: 16 * s }}>
+              <ScorersBlock s={s} m={m} size={13} side="home" />
+              <ScorersBlock s={s} m={m} size={13} side="away" />
+            </div>
+          </div>
+        )}
+      </div>
+      {selectedSponsors.length > 0 && (
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 80 * s, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 * s, zIndex: 20 }}>
+          {selectedSponsors.map((url, i) => <img key={i} src={url} alt="" style={{ height: 42 * s, maxWidth: 120 * s, objectFit: "contain", filter: "brightness(0) invert(1)" }} />)}</div>)}</div>);
+}
+
+function FootballNoPhotoStory({ s, m, selectedSponsors }) {
+  const sponsorBarH = selectedSponsors.length > 0 ? 100 : 0;
+  const grupaKolejka = [m.grupa, m.kolejka].filter(Boolean).join(" · ");
+  return (
+    <div className="absolute inset-0" style={{ background: `linear-gradient(180deg, ${m.color_liga} 0%, #001533 40%, #001533 100%)` }}>
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6 * s, background: `linear-gradient(90deg, ${m.color_home}, ${m.color_liga}, ${m.color_away})` }} />
+      <div style={{ position: "absolute", bottom: sponsorBarH * s, left: 0, right: 0, height: 6 * s, background: `linear-gradient(90deg, ${m.color_home}, ${m.color_liga}, ${m.color_away})` }} />
+      <div className="absolute inset-0 flex flex-col items-center justify-evenly z-10" style={{ pointerEvents: "none", paddingTop: 20 * s, paddingBottom: (20 + sponsorBarH) * s }}>
+        <div className="flex flex-col items-center" style={{ gap: 12 * s }}>
+          <LigaLogo s={s} m={m} size={110} light />
+          <div style={{ background: "rgba(0,0,0,0.4)", padding: `${8 * s}px ${28 * s}px`, borderRadius: 20 * s }}>
+            <span style={{ color: "#fff", fontSize: 26 * s, fontWeight: 600, letterSpacing: 2, textTransform: "uppercase" }}>{grupaKolejka || "—"}</span>
+          </div>
+        </div>
+        <TeamCircle s={s} m={m} team="home" size={180} fontSize={28} light />
+        <ScorersBlock s={s} m={m} size={22} side="home" center />
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <span style={{ fontSize: 170 * s, fontWeight: 900, color: "#fff", lineHeight: 1, letterSpacing: 8 * s }}>{m.goals_home} : {m.goals_away}</span>
+          <span style={{ color: "rgba(255,255,255,0.75)", fontSize: 26 * s, fontWeight: 500, letterSpacing: 2, marginTop: 10 * s }}>Do przerwy {m.half_home}:{m.half_away}</span>
+        </div>
+        <ScorersBlock s={s} m={m} size={22} side="away" center />
+        <TeamCircle s={s} m={m} team="away" size={180} fontSize={28} light />
+      </div>
+      {selectedSponsors.length > 0 && (
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 100 * s, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 * s, zIndex: 20 }}>
+          {selectedSponsors.map((url, i) => <img key={i} src={url} alt="" style={{ height: 52 * s, maxWidth: 140 * s, objectFit: "contain", filter: "brightness(0) invert(1)" }} />)}</div>)}</div>);
 }
 
 // ── CLASSIC OVERLAYS (with photo) ────────────────────────────────────────────
@@ -271,6 +444,7 @@ function SplitPanelPreviewStory({ s, m, selectedSponsors }) {
 
 // ── NO-PHOTO VARIANTS ────────────────────────────────────────────────────────
 function NoPhotoPost({ s, m, showSets, selectedSponsors }) {
+  if (m.sport === "football") return <FootballNoPhotoPost s={s} m={m} selectedSponsors={selectedSponsors} />;
   const isPreview = m.mode === "preview";
   const sponsorBarH = selectedSponsors.length > 0 ? 80 : 0;
   return (
@@ -294,6 +468,7 @@ function NoPhotoPost({ s, m, showSets, selectedSponsors }) {
           {selectedSponsors.map((url, i) => <img key={i} src={url} alt="" style={{ height: 42 * s, maxWidth: 120 * s, objectFit: "contain", filter: "brightness(0) invert(1)" }} />)}</div>)}</div>);
 }
 function NoPhotoStory({ s, m, showSets, selectedSponsors }) {
+  if (m.sport === "football") return <FootballNoPhotoStory s={s} m={m} selectedSponsors={selectedSponsors} />;
   const isPreview = m.mode === "preview";
   const sponsorBarH = selectedSponsors.length > 0 ? 100 : 0;
   return (
@@ -381,6 +556,7 @@ function PreviewPanel({ label, targetW, targetH, image, imageNat, zoom, bgPos, s
 
   function renderOverlay() {
     if (!image) return isStory ? <NoPhotoStory s={s} m={m} showSets={showSets} selectedSponsors={selectedSponsors} /> : <NoPhotoPost s={s} m={m} showSets={showSets} selectedSponsors={selectedSponsors} />;
+    if (m.sport === "football") return isStory ? <FootballPhotoStory s={s} m={m} selectedSponsors={selectedSponsors} /> : <FootballPhotoPost s={s} m={m} selectedSponsors={selectedSponsors} />;
     if (m.mode === "preview") return isStory ? <SplitPanelPreviewStory s={s} m={m} selectedSponsors={selectedSponsors} /> : <SplitPanelPreviewPost s={s} m={m} selectedSponsors={selectedSponsors} />;
     if (graphicStyle === "split_panel") return isStory ? <SplitPanelOverlayStory s={s} m={m} showSets={showSets} selectedSponsors={selectedSponsors} /> : <SplitPanelOverlayPost s={s} m={m} showSets={showSets} selectedSponsors={selectedSponsors} />;
     return isStory ? <PhotoOverlayStory s={s} m={m} showSets={showSets} selectedSponsors={selectedSponsors} /> : <PhotoOverlayPost s={s} m={m} showSets={showSets} selectedSponsors={selectedSponsors} />;
@@ -420,6 +596,7 @@ export default function PhotoEditor() {
   const m = getMatchFromURL();
   const isDev = m.match_id === "DEV";
   const isPreview = m.mode === "preview";
+  const isFootball = m.sport === "football";
   const availableStyles = isPreview ? STYLES_PREVIEW : STYLES_RESULT;
   const [graphicStyle, setGraphicStyle] = useState(isPreview ? "split_panel" : "classic");
 
@@ -509,9 +686,11 @@ export default function PhotoEditor() {
     } catch (err) { console.error(err); setStatus("error"); }
   };
 
-  const headerText = isPreview
-    ? `${m.team_home} vs ${m.team_away}  ·  ${m.kolejka}  ·  ${m.data_meczu} ${m.godzina}`
-    : `${m.team_home} vs ${m.team_away}  ·  ${m.sets_home}:${m.sets_away}  ·  ${m.kolejka}  ·  mecz #${m.match_id}`;
+  const headerText = isFootball
+    ? `${m.team_home} vs ${m.team_away}  ·  ${m.goals_home}:${m.goals_away}${m.grupa ? `  ·  ${m.grupa}` : ""}${m.kolejka ? `  ·  ${m.kolejka}` : ""}  ·  mecz #${m.match_id}`
+    : isPreview
+      ? `${m.team_home} vs ${m.team_away}  ·  ${m.kolejka}  ·  ${m.data_meczu} ${m.godzina}`
+      : `${m.team_home} vs ${m.team_away}  ·  ${m.sets_home}:${m.sets_away}  ·  ${m.kolejka}  ·  mecz #${m.match_id}`;
 
   return (
     <div className="flex flex-col items-center gap-3 p-3 max-w-5xl mx-auto">
@@ -524,7 +703,7 @@ export default function PhotoEditor() {
         </p>
       </div>
 
-      <StyleSelector styles={availableStyles} value={graphicStyle} onChange={setGraphicStyle} />
+      {!isFootball && <StyleSelector styles={availableStyles} value={graphicStyle} onChange={setGraphicStyle} />}
 
       {/* ── Preview panels ── */}
       <div className="flex gap-6 flex-wrap justify-center items-start">
@@ -543,7 +722,7 @@ export default function PhotoEditor() {
       {/* ── Shared controls BELOW panels ── */}
       {(!isPreview || m.sponsorzy.length > 0) && (
         <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%", maxWidth: 600, background: "rgba(0,0,0,0.04)", borderRadius: 12, padding: "12px 16px" }}>
-          {!isPreview && (
+          {!isPreview && !isFootball && (
             <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", userSelect: "none" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ fontSize: 16 }}>📊</span>
