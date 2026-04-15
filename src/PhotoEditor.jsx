@@ -192,21 +192,23 @@ function FootballNoPhotoPost({ s, m, selectedSponsors }) {
     <div className="absolute inset-0" style={{ background: `linear-gradient(180deg, ${m.color_liga} 0%, #001533 100%)` }}>
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6 * s, background: `linear-gradient(90deg, ${m.color_home}, ${m.color_liga}, ${m.color_away})` }} />
       <div style={{ position: "absolute", bottom: sponsorBarH * s, left: 0, right: 0, height: 6 * s, background: `linear-gradient(90deg, ${m.color_home}, ${m.color_liga}, ${m.color_away})` }} />
-      <div className="absolute inset-0 flex flex-col items-center z-10" style={{ pointerEvents: "none", paddingTop: 30 * s, paddingBottom: sponsorBarH * s, gap: 10 * s }}>
-        <LigaLogo s={s} m={m} size={70} light />
-        <div style={{ background: "rgba(0,0,0,0.35)", padding: `${6 * s}px ${22 * s}px`, borderRadius: 16 * s }}>
-          <span style={{ color: "#fff", fontSize: 18 * s, fontWeight: 600, letterSpacing: 2, textTransform: "uppercase" }}>{grupaKolejka || "—"}</span>
+      <div className="absolute inset-0 flex flex-col items-center justify-center z-10" style={{ pointerEvents: "none", paddingTop: 30 * s, paddingBottom: (30 + sponsorBarH) * s, gap: 18 * s }}>
+        <div className="flex flex-col items-center" style={{ gap: 10 * s }}>
+          <LigaLogo s={s} m={m} size={70} light />
+          <div style={{ background: "rgba(0,0,0,0.35)", padding: `${6 * s}px ${22 * s}px`, borderRadius: 16 * s }}>
+            <span style={{ color: "#fff", fontSize: 18 * s, fontWeight: 600, letterSpacing: 2, textTransform: "uppercase" }}>{grupaKolejka || "—"}</span>
+          </div>
         </div>
-        <div className="flex items-center justify-center" style={{ gap: 24 * s, marginTop: 4 * s }}>
+        <div style={{ width: "100%", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 24 * s }}>
           <TeamCircle s={s} m={m} team="home" size={110} fontSize={20} light />
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
             <span style={{ fontSize: 96 * s, fontWeight: 900, color: "#fff", lineHeight: 1, letterSpacing: 4 * s }}>{m.goals_home} : {m.goals_away}</span>
-            <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 14 * s, fontWeight: 500, letterSpacing: 1, marginTop: 4 * s }}>Do przerwy {m.half_home}:{m.half_away}</span>
+            <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 14 * s, fontWeight: 500, letterSpacing: 1, marginTop: 6 * s }}>Do przerwy {m.half_home}:{m.half_away}</span>
           </div>
           <TeamCircle s={s} m={m} team="away" size={110} fontSize={20} light />
         </div>
         {(m.scorers_home?.length > 0 || m.scorers_away?.length > 0) && (
-          <div style={{ marginTop: 8 * s, width: "85%", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 * s }}>
+          <div style={{ width: "85%", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 * s }}>
             <div style={{ fontSize: 11 * s, fontWeight: 700, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", letterSpacing: 2 }}>Strzelcy</div>
             <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "flex-start", gap: 16 * s }}>
               <ScorersBlock s={s} m={m} size={13} side="home" />
@@ -227,21 +229,30 @@ function FootballNoPhotoStory({ s, m, selectedSponsors }) {
     <div className="absolute inset-0" style={{ background: `linear-gradient(180deg, ${m.color_liga} 0%, #001533 40%, #001533 100%)` }}>
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6 * s, background: `linear-gradient(90deg, ${m.color_home}, ${m.color_liga}, ${m.color_away})` }} />
       <div style={{ position: "absolute", bottom: sponsorBarH * s, left: 0, right: 0, height: 6 * s, background: `linear-gradient(90deg, ${m.color_home}, ${m.color_liga}, ${m.color_away})` }} />
-      <div className="absolute inset-0 flex flex-col items-center justify-evenly z-10" style={{ pointerEvents: "none", paddingTop: 20 * s, paddingBottom: (20 + sponsorBarH) * s }}>
-        <div className="flex flex-col items-center" style={{ gap: 12 * s }}>
+      <div className="absolute inset-0 flex flex-col items-center justify-center z-10" style={{ pointerEvents: "none", paddingTop: 40 * s, paddingBottom: (40 + sponsorBarH) * s, gap: 40 * s }}>
+        <div className="flex flex-col items-center" style={{ gap: 14 * s }}>
           <LigaLogo s={s} m={m} size={110} light />
           <div style={{ background: "rgba(0,0,0,0.4)", padding: `${8 * s}px ${28 * s}px`, borderRadius: 20 * s }}>
             <span style={{ color: "#fff", fontSize: 26 * s, fontWeight: 600, letterSpacing: 2, textTransform: "uppercase" }}>{grupaKolejka || "—"}</span>
           </div>
         </div>
-        <TeamCircle s={s} m={m} team="home" size={180} fontSize={28} light />
-        <ScorersBlock s={s} m={m} size={22} side="home" center />
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-          <span style={{ fontSize: 170 * s, fontWeight: 900, color: "#fff", lineHeight: 1, letterSpacing: 8 * s }}>{m.goals_home} : {m.goals_away}</span>
-          <span style={{ color: "rgba(255,255,255,0.75)", fontSize: 26 * s, fontWeight: 500, letterSpacing: 2, marginTop: 10 * s }}>Do przerwy {m.half_home}:{m.half_away}</span>
+        <div style={{ width: "100%", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 24 * s }}>
+          <TeamCircle s={s} m={m} team="home" size={150} fontSize={24} light />
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+            <span style={{ fontSize: 140 * s, fontWeight: 900, color: "#fff", lineHeight: 1, letterSpacing: 6 * s }}>{m.goals_home} : {m.goals_away}</span>
+            <span style={{ color: "rgba(255,255,255,0.75)", fontSize: 22 * s, fontWeight: 500, letterSpacing: 2, marginTop: 10 * s }}>Do przerwy {m.half_home}:{m.half_away}</span>
+          </div>
+          <TeamCircle s={s} m={m} team="away" size={150} fontSize={24} light />
         </div>
-        <ScorersBlock s={s} m={m} size={22} side="away" center />
-        <TeamCircle s={s} m={m} team="away" size={180} fontSize={28} light />
+        {(m.scorers_home?.length > 0 || m.scorers_away?.length > 0) && (
+          <div style={{ width: "85%", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 * s }}>
+            <div style={{ fontSize: 16 * s, fontWeight: 700, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: 3 }}>Strzelcy</div>
+            <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "flex-start", gap: 20 * s }}>
+              <ScorersBlock s={s} m={m} size={20} side="home" />
+              <ScorersBlock s={s} m={m} size={20} side="away" />
+            </div>
+          </div>
+        )}
       </div>
       {selectedSponsors.length > 0 && (
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 100 * s, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 * s, zIndex: 20 }}>
@@ -561,7 +572,7 @@ function PreviewPanel({ label, targetW, targetH, image, imageNat, zoom, bgPos, s
     if (graphicStyle === "split_panel") return isStory ? <SplitPanelOverlayStory s={s} m={m} showSets={showSets} selectedSponsors={selectedSponsors} /> : <SplitPanelOverlayPost s={s} m={m} showSets={showSets} selectedSponsors={selectedSponsors} />;
     return isStory ? <PhotoOverlayStory s={s} m={m} showSets={showSets} selectedSponsors={selectedSponsors} /> : <PhotoOverlayPost s={s} m={m} showSets={showSets} selectedSponsors={selectedSponsors} />;
   }
-  const showDefaultGrad = image && graphicStyle !== "split_panel" && m.mode !== "preview";
+  const showDefaultGrad = image && (m.sport === "football" || (graphicStyle !== "split_panel" && m.mode !== "preview"));
   return (
     <div className="flex flex-col items-center gap-1">
       <span style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-primary, #333)" }}>{label}</span>
