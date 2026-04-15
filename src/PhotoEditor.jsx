@@ -187,33 +187,23 @@ function FootballPhotoStory({ s, m, selectedSponsors }) {
 
 function FootballNoPhotoPost({ s, m, selectedSponsors }) {
   const sponsorBarH = selectedSponsors.length > 0 ? 80 : 0;
-  const grupaKolejka = [m.grupa, m.kolejka].filter(Boolean).join(" · ");
+  const hasScorers = m.scorers_home?.length > 0 || m.scorers_away?.length > 0;
   return (
     <div className="absolute inset-0" style={{ background: `linear-gradient(180deg, ${m.color_liga} 0%, #001533 100%)` }}>
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6 * s, background: `linear-gradient(90deg, ${m.color_home}, ${m.color_liga}, ${m.color_away})` }} />
       <div style={{ position: "absolute", bottom: sponsorBarH * s, left: 0, right: 0, height: 6 * s, background: `linear-gradient(90deg, ${m.color_home}, ${m.color_liga}, ${m.color_away})` }} />
-      <div className="absolute inset-0 flex flex-col items-center justify-center z-10" style={{ pointerEvents: "none", paddingTop: 40 * s, paddingBottom: sponsorBarH * s, gap: 40 * s }}>
-        <div className="flex flex-col items-center" style={{ gap: 14 * s }}>
-          <LigaLogo s={s} m={m} size={100} light />
-          <div style={{ background: "rgba(0,0,0,0.4)", padding: `${10 * s}px ${30 * s}px`, borderRadius: 20 * s }}>
-            <span style={{ color: "#fff", fontSize: 28 * s, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>{grupaKolejka || "—"}</span>
-          </div>
-        </div>
-        <div style={{ width: "100%", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 36 * s }}>
-          <TeamCircle s={s} m={m} team="home" size={150} fontSize={28} light />
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
-            <span style={{ fontSize: 140 * s, fontWeight: 900, color: "#fff", lineHeight: 1, letterSpacing: 6 * s }}>{m.goals_home} : {m.goals_away}</span>
-            <span style={{ color: "rgba(255,255,255,0.75)", fontSize: 22 * s, fontWeight: 600, letterSpacing: 2, marginTop: 10 * s }}>Do przerwy {m.half_home}:{m.half_away}</span>
-          </div>
-          <TeamCircle s={s} m={m} team="away" size={150} fontSize={28} light />
-        </div>
-        {(m.scorers_home?.length > 0 || m.scorers_away?.length > 0) && (
-          <div style={{ width: "85%", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 * s }}>
-            <div style={{ fontSize: 20 * s, fontWeight: 700, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: 3 }}>Strzelcy</div>
-            <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "flex-start", gap: 20 * s }}>
-              <ScorersBlock s={s} m={m} size={22} side="home" />
-              <ScorersBlock s={s} m={m} size={22} side="away" />
-            </div>
+      <div className="absolute inset-0 flex flex-col items-center justify-center z-10" style={{ pointerEvents: "none", gap: 12 * s, paddingBottom: sponsorBarH * s }}>
+        <LigaLogo s={s} m={m} size={90} light />
+        <KolejkaBadge s={s} m={m} fontSize={22} light />
+        <div className="flex items-center justify-center" style={{ gap: 32 * s, marginTop: 10 * s }}>
+          <TeamCircle s={s} m={m} team="home" size={140} fontSize={24} light />
+          <span style={{ fontSize: 116 * s, fontWeight: 900, color: "#fff", lineHeight: 1, letterSpacing: 4 * s }}>{m.goals_home} : {m.goals_away}</span>
+          <TeamCircle s={s} m={m} team="away" size={140} fontSize={24} light /></div>
+        <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 20 * s, fontWeight: 600, letterSpacing: 2, marginTop: 4 * s }}>Do przerwy {m.half_home}:{m.half_away}</div>
+        {hasScorers && (
+          <div style={{ width: "85%", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 20 * s, marginTop: 6 * s }}>
+            <ScorersBlock s={s} m={m} size={16} side="home" />
+            <ScorersBlock s={s} m={m} size={16} side="away" />
           </div>
         )}
       </div>
@@ -224,35 +214,23 @@ function FootballNoPhotoPost({ s, m, selectedSponsors }) {
 
 function FootballNoPhotoStory({ s, m, selectedSponsors }) {
   const sponsorBarH = selectedSponsors.length > 0 ? 100 : 0;
-  const grupaKolejka = [m.grupa, m.kolejka].filter(Boolean).join(" · ");
+  const hasScorers = m.scorers_home?.length > 0 || m.scorers_away?.length > 0;
   return (
     <div className="absolute inset-0" style={{ background: `linear-gradient(180deg, ${m.color_liga} 0%, #001533 40%, #001533 100%)` }}>
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6 * s, background: `linear-gradient(90deg, ${m.color_home}, ${m.color_liga}, ${m.color_away})` }} />
       <div style={{ position: "absolute", bottom: sponsorBarH * s, left: 0, right: 0, height: 6 * s, background: `linear-gradient(90deg, ${m.color_home}, ${m.color_liga}, ${m.color_away})` }} />
-      <div className="absolute inset-0 flex flex-col items-center justify-center z-10" style={{ pointerEvents: "none", paddingTop: 60 * s, paddingBottom: sponsorBarH * s, gap: 60 * s }}>
-        <div className="flex flex-col items-center" style={{ gap: 18 * s }}>
-          <LigaLogo s={s} m={m} size={140} light />
-          <div style={{ background: "rgba(0,0,0,0.4)", padding: `${12 * s}px ${34 * s}px`, borderRadius: 22 * s }}>
-            <span style={{ color: "#fff", fontSize: 34 * s, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>{grupaKolejka || "—"}</span>
-          </div>
+      <div className="absolute inset-0 flex flex-col items-center justify-evenly z-10" style={{ pointerEvents: "none", paddingTop: 20 * s, paddingBottom: (20 + sponsorBarH) * s }}>
+        <div className="flex flex-col items-center" style={{ gap: 12 * s }}>
+          <LigaLogo s={s} m={m} size={120} light />
+          <KolejkaBadge s={s} m={m} fontSize={28} light /></div>
+        <TeamCircle s={s} m={m} team="home" size={200} fontSize={30} light />
+        {hasScorers && <ScorersBlock s={s} m={m} size={24} side="home" center />}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+          <span style={{ fontSize: 180 * s, fontWeight: 900, color: "#fff", lineHeight: 1, letterSpacing: 8 * s }}>{m.goals_home} : {m.goals_away}</span>
+          <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 28 * s, fontWeight: 600, letterSpacing: 2, marginTop: 12 * s }}>Do przerwy {m.half_home}:{m.half_away}</span>
         </div>
-        <div style={{ width: "100%", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 40 * s }}>
-          <TeamCircle s={s} m={m} team="home" size={200} fontSize={34} light />
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
-            <span style={{ fontSize: 200 * s, fontWeight: 900, color: "#fff", lineHeight: 1, letterSpacing: 8 * s }}>{m.goals_home} : {m.goals_away}</span>
-            <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 30 * s, fontWeight: 600, letterSpacing: 2, marginTop: 14 * s }}>Do przerwy {m.half_home}:{m.half_away}</span>
-          </div>
-          <TeamCircle s={s} m={m} team="away" size={200} fontSize={34} light />
-        </div>
-        {(m.scorers_home?.length > 0 || m.scorers_away?.length > 0) && (
-          <div style={{ width: "88%", display: "flex", flexDirection: "column", alignItems: "center", gap: 16 * s }}>
-            <div style={{ fontSize: 26 * s, fontWeight: 700, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: 4 }}>Strzelcy</div>
-            <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "flex-start", gap: 24 * s }}>
-              <ScorersBlock s={s} m={m} size={30} side="home" />
-              <ScorersBlock s={s} m={m} size={30} side="away" />
-            </div>
-          </div>
-        )}
+        {hasScorers && <ScorersBlock s={s} m={m} size={24} side="away" center />}
+        <TeamCircle s={s} m={m} team="away" size={200} fontSize={30} light />
       </div>
       {selectedSponsors.length > 0 && (
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 100 * s, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 * s, zIndex: 20 }}>
