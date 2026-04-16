@@ -602,7 +602,7 @@ export default function PhotoEditor() {
 
   // Shared controls
   const [showSets, setShowSets] = useState(false);
-  const [selectedSponsors, setSelectedSponsors] = useState(m.sponsorzy || []);
+  const [selectedSponsors, setSelectedSponsors] = useState([]);
 
   const [status, setStatus] = useState(null);
   const [resultUrls, setResultUrls] = useState(null);
