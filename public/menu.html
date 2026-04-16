@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lubańska Liga Siatkówki — Narzędzia</title>
+  <title>Liga — Narzędzia</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
@@ -12,50 +12,105 @@
     .logo { width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.9); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
     .logo span { color: #004aad; font-family: Oswald, sans-serif; font-size: 14px; font-weight: 700; }
     h1 { font-family: Oswald, sans-serif; font-size: 28px; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 8px; text-align: center; }
-    .subtitle { color: rgba(255,255,255,0.5); font-size: 14px; margin-bottom: 40px; text-align: center; }
+    .subtitle { color: rgba(255,255,255,0.5); font-size: 14px; margin-bottom: 24px; text-align: center; }
+    .sport-switch { display: flex; gap: 8px; margin-bottom: 40px; background: rgba(255,255,255,0.04); padding: 4px; border-radius: 10px; }
+    .sport-switch a { padding: 8px 18px; border-radius: 7px; color: rgba(255,255,255,0.55); font-size: 12px; font-weight: 500; text-decoration: none; text-transform: uppercase; letter-spacing: 1px; transition: all 0.15s; }
+    .sport-switch a.active { background: rgba(255,255,255,0.1); color: #fff; }
+    .sport-switch a:hover { color: #fff; }
     .cards { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; max-width: 900px; }
     .card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 32px 28px; width: 260px; text-decoration: none; color: #fff; transition: all 0.2s; cursor: pointer; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; }
     .card:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); transform: translateY(-2px); }
+    .card.disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
     .card-icon { font-size: 40px; }
     .card-title { font-family: Oswald, sans-serif; font-size: 20px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
     .card-desc { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.5; }
     .card-accent { width: 100%; height: 3px; border-radius: 2px; margin-top: 8px; }
+    .card-badge { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.06); padding: 3px 10px; border-radius: 999px; }
     .footer { margin-top: 60px; color: rgba(255,255,255,0.2); font-size: 11px; text-align: center; }
   </style>
 </head>
 <body>
   <div class="logo"><span>LIGA</span></div>
-  <h1>Lubańska Liga Siatkówki</h1>
+  <h1 id="title">Liga</h1>
   <p class="subtitle">Narzędzia do generowania grafik</p>
 
-  <div class="cards">
-    <!-- WYNIKI -->
-    <a class="card" href="https://primary-production-9c937.up.railway.app/form/e1f0cdd7-2d15-4a26-b320-83f2b9ab2640">
-      <div class="card-icon">📊</div>
-      <div class="card-title">Wyniki meczu</div>
-      <div class="card-desc">Wpisz wynik i sety — grafika wygeneruje się automatycznie.</div>
-      <div class="card-accent" style="background: linear-gradient(90deg, #059669, #10b981);"></div>
-    </a>
-
-    <!-- ZAPOWIEDŹ KOLEJKI -->
-    <a class="card" href="https://primary-production-9c937.up.railway.app/form/03ec6adf-8afd-4bc9-ada3-9dc1e8835e43">
-      <div class="card-icon">📢</div>
-      <div class="card-title">Zapowiedź kolejki/meczu</div>
-      <div class="card-desc">Stwórz grafikę z zapowiedzią kolejki/meczu.</div>
-      <div class="card-accent" style="background: linear-gradient(90deg, #2563eb, #60a5fa);"></div>
-    </a>
-
-    <!-- ZAPOWIEDŹ ZE ZDJĘCIEM -->
-    <a class="card" href="https://primary-production-9c937.up.railway.app/form/8917e25c-d414-455a-8f62-01c7f42e32b2">
-      <div class="card-icon">📋</div>
-      <div class="card-title">Tabela ligowa</div>
-      <div class="card-desc">Generuj grafikę aktualnej tabeli ligowej.</div>
-      <div class="card-accent" style="background: linear-gradient(90deg, #f59e0b, #fbbf24);"></div>
-    </a>
+  <div class="sport-switch" id="sportSwitch">
+    <a href="?sport=siatkowka" data-sport="siatkowka">Siatkówka</a>
+    <a href="?sport=pilka" data-sport="pilka">Piłka nożna</a>
   </div>
 
-  <div class="footer">
-    Liga Siatkówki &bull; Automatyzacja grafik &bull; 2026
+  <div class="cards" id="cards"></div>
+
+  <div class="footer" id="footer">
+    Liga &bull; Automatyzacja grafik &bull; 2026
   </div>
+
+  <script>
+    // Konfiguracja kafelków per sport — łatwa do dostosowania pod multi-tenant w przyszłości.
+    // URL-e formularzy n8n: jeden workflow z routingiem po ?sport=, tu jeszcze wskazują na pojedyncze formularze dopóki v2 nie wejdzie.
+    const SPORTS = {
+      siatkowka: {
+        title: "Lubańska Liga Siatkówki",
+        tiles: [
+          { icon: "📊", title: "Wynik meczu", desc: "Wpisz wynik i sety — grafika wygeneruje się automatycznie.", href: "https://primary-production-9c937.up.railway.app/form/e1f0cdd7-2d15-4a26-b320-83f2b9ab2640", accent: "linear-gradient(90deg, #059669, #10b981)" },
+          { icon: "📢", title: "Zapowiedź kolejki/meczu", desc: "Stwórz grafikę z zapowiedzią kolejki/meczu.", href: "https://primary-production-9c937.up.railway.app/form/03ec6adf-8afd-4bc9-ada3-9dc1e8835e43", accent: "linear-gradient(90deg, #2563eb, #60a5fa)" },
+          { icon: "📋", title: "Tabela ligowa", desc: "Generuj grafikę aktualnej tabeli ligowej.", href: "https://primary-production-9c937.up.railway.app/form/8917e25c-d414-455a-8f62-01c7f42e32b2", accent: "linear-gradient(90deg, #f59e0b, #fbbf24)" }
+        ]
+      },
+      pilka: {
+        title: "Liga piłki nożnej",
+        tiles: [
+          { icon: "⚽", title: "Wynik meczu", desc: "Wpisz wynik, opcjonalnie dodaj strzelców i MVP.", href: "TODO_FOOTBALL_RESULT_FORM_URL", accent: "linear-gradient(90deg, #059669, #10b981)" },
+          { icon: "📢", title: "Zapowiedź kolejki/meczu", desc: "Już wkrótce — w trakcie budowy.", disabled: true, accent: "linear-gradient(90deg, #2563eb, #60a5fa)" },
+          { icon: "📋", title: "Tabela ligowa", desc: "Już wkrótce — w trakcie budowy.", disabled: true, accent: "linear-gradient(90deg, #f59e0b, #fbbf24)" }
+        ]
+      }
+    };
+
+    function getSport() {
+      const p = new URLSearchParams(window.location.search);
+      const s = (p.get("sport") || "siatkowka").toLowerCase();
+      // Kompatybilność wsteczna: akceptuj alternatywne nazwy
+      if (s === "volleyball" || s === "siatka") return "siatkowka";
+      if (s === "football" || s === "pn" || s === "pilka-nozna") return "pilka";
+      return SPORTS[s] ? s : "siatkowka";
+    }
+
+    function render() {
+      const sport = getSport();
+      const cfg = SPORTS[sport];
+
+      document.getElementById("title").textContent = cfg.title;
+      document.title = cfg.title + " — Narzędzia";
+
+      // aktywna zakładka
+      document.querySelectorAll("#sportSwitch a").forEach(a => {
+        if (a.dataset.sport === sport) a.classList.add("active");
+        else a.classList.remove("active");
+      });
+
+      // kafelki
+      const cards = document.getElementById("cards");
+      cards.innerHTML = "";
+      cfg.tiles.forEach(t => {
+        const isDisabled = t.disabled || !t.href || t.href.startsWith("TODO_");
+        const el = document.createElement(isDisabled ? "div" : "a");
+        el.className = "card" + (isDisabled ? " disabled" : "");
+        if (!isDisabled) el.href = t.href;
+        el.innerHTML = `
+          <div class="card-icon">${t.icon}</div>
+          <div class="card-title">${t.title}</div>
+          <div class="card-desc">${t.desc}</div>
+          ${isDisabled ? '<div class="card-badge">wkrótce</div>' : ''}
+          <div class="card-accent" style="background: ${t.accent};"></div>
+        `;
+        cards.appendChild(el);
+      });
+    }
+
+    render();
+    // Re-render gdy user klika zakładkę (dla single-page UX — choć linki są prawdziwymi URL-ami)
+    window.addEventListener("popstate", render);
+  </script>
 </body>
 </html>

@@ -34,6 +34,7 @@ function getMatchFromURL() {
       scorers_home: [{ name: "Kowalski", minute: 12 }, { name: "Nowak", minute: 45 }, { name: "Wiśniewski", minute: 78 }],
       scorers_away: [{ name: "Lewandowski", minute: 23 }, { name: "Zieliński", minute: 67 }],
       kolejka: "Ćwierćfinały",
+      kategoria_wiekowa: "", faza_rozgrywek: "", mvp: "",
       color_home: "#d4ba0f", color_away: "#fc77c2", color_liga: "#004aad",
       sponsorzy: [],
       data_meczu: "07.04.2026", godzina: "19:20", miejsce: "Hala MOSiR Lubań",
@@ -64,6 +65,9 @@ function getMatchFromURL() {
     scorers_home: parseScorers(scorersHomeRaw),
     scorers_away: parseScorers(scorersAwayRaw),
     kolejka: p.get("kolejka") || "",
+    kategoria_wiekowa: p.get("kategoria_wiekowa") || "",
+    faza_rozgrywek: p.get("faza_rozgrywek") || "",
+    mvp: p.get("mvp") || "",
     color_home: p.get("color_home") || "#1a56db", color_away: p.get("color_away") || "#dc2626", color_liga: p.get("color_liga") || "#004aad",
     sponsorzy,
     data_meczu: p.get("data") || "", godzina: p.get("godzina") || "19:20", miejsce: p.get("miejsce") || "Hala MOSiR Lubań",
@@ -574,6 +578,28 @@ function PreviewPanel({ label, targetW, targetH, image, imageNat, zoom, bgPos, s
 }
 
 // ── SPONSORS SELECTOR ────────────────────────────────────────────────────────
+function ExtraField({ label, placeholder, value, onChange, hint }) {
+  return (
+    <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <span style={{ fontSize: 11, color: "var(--color-text-secondary, #888)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>
+        {label}
+      </span>
+      <input
+        type="text"
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        style={{
+          padding: "8px 12px", borderRadius: 6, border: "1px solid rgba(255,255,255,0.1)",
+          background: "rgba(255,255,255,0.05)", color: "var(--color-text-primary, #222)",
+          fontSize: 13, outline: "none",
+        }}
+      />
+      {hint && <span style={{ fontSize: 10, color: "var(--color-text-secondary, #888)", opacity: 0.7 }}>{hint}</span>}
+    </label>
+  );
+}
+
 function SponsorsSelector({ sponsorzy, selected, setSelected }) {
   if (sponsorzy.length === 0) return null;
   const toggle = (url) => setSelected(prev => prev.includes(url) ? prev.filter(u => u !== url) : [...prev, url]);
@@ -603,6 +629,12 @@ export default function PhotoEditor() {
   // Shared controls
   const [showSets, setShowSets] = useState(false);
   const [selectedSponsors, setSelectedSponsors] = useState([]);
+
+  // Opcjonalne uniwersalne pola — seed z URL, editable w collapsible section
+  const [kategoriaWiekowa, setKategoriaWiekowa] = useState(m.kategoria_wiekowa || "");
+  const [fazaRozgrywek, setFazaRozgrywek] = useState(m.faza_rozgrywek || "");
+  const [mvp, setMvp] = useState(m.mvp || "");
+  const [extrasOpen, setExtrasOpen] = useState(false);
 
   const [status, setStatus] = useState(null);
   const [resultUrls, setResultUrls] = useState(null);
@@ -642,6 +674,9 @@ export default function PhotoEditor() {
       strzelcy_home: (m.scorers_home || []).map(sc => `${sc.name}:${sc.minute}`).join(','),
       strzelcy_away: (m.scorers_away || []).map(sc => `${sc.name}:${sc.minute}`).join(','),
       kolejka: m.kolejka,
+      kategoria_wiekowa: kategoriaWiekowa.trim(),
+      faza_rozgrywek: fazaRozgrywek.trim(),
+      mvp: mvp.trim(),
       color_home: m.color_home,
       color_away: m.color_away,
       color_liga: m.color_liga,
@@ -746,6 +781,48 @@ export default function PhotoEditor() {
           {m.sponsorzy.length > 0 && (
             <SponsorsSelector sponsorzy={m.sponsorzy} selected={selectedSponsors} setSelected={setSelectedSponsors} />
           )}
+
+          {/* ── Opcjonalne uniwersalne pola (collapsible) ── */}
+          <div style={{ background: "rgba(0,0,0,0.15)", borderRadius: 10, padding: "10px 14px" }}>
+            <button
+              type="button"
+              onClick={() => setExtrasOpen(v => !v)}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                width: "100%", background: "transparent", border: "none", padding: 0,
+                cursor: "pointer", color: "var(--color-text-secondary, #888)",
+                fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1,
+              }}
+            >
+              <span>▾ Dodatkowe informacje {!extrasOpen && <span style={{ opacity: 0.5, textTransform: "none", letterSpacing: 0, fontWeight: 400 }}>(opcjonalne)</span>}</span>
+              <span style={{ transform: extrasOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", fontSize: 10 }}>▼</span>
+            </button>
+            {extrasOpen && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12 }}>
+                <ExtraField
+                  label="Kategoria wiekowa"
+                  placeholder="np. U17, Senior"
+                  value={kategoriaWiekowa}
+                  onChange={setKategoriaWiekowa}
+                  hint="Pojawia się w pasku nad wynikiem"
+                />
+                <ExtraField
+                  label="Faza rozgrywek"
+                  placeholder="np. 1/4 finału, Baraż"
+                  value={fazaRozgrywek}
+                  onChange={setFazaRozgrywek}
+                  hint="Pojawia się w pasku nad wynikiem"
+                />
+                <ExtraField
+                  label="MVP meczu"
+                  placeholder="np. Jan Kowalski"
+                  value={mvp}
+                  onChange={setMvp}
+                  hint="Chip pod wynikiem głównym"
+                />
+              </div>
+            )}
+          </div>
         </div>
       )}
 
