@@ -45,18 +45,24 @@ function getMatchFromURL() {
   const set_scores = setyRaw ? setyRaw.split(",").map(s => { const [h, a] = s.split(":").map(Number); return { home: h || 0, away: a || 0 }; }) : [];
   const sponsorzyRaw = p.get("sponsorzy") || "";
   const sponsorzy = sponsorzyRaw ? sponsorzyRaw.split(",").filter(Boolean) : [];
-  const goalsRaw = p.get("goals") || "0:0";
-  const [gh, ga] = goalsRaw.split(":").map(Number);
-  const przerwaRaw = p.get("przerwa") || "0:0";
-  const [hh, ha] = przerwaRaw.split(":").map(Number);
+  const goalsRaw = p.get("goals") || "";
+  const [ghFromGoals, gaFromGoals] = goalsRaw ? goalsRaw.split(":").map(Number) : [null, null];
+  const gh = ghFromGoals ?? (Number(p.get("goals_home")) || 0);
+  const ga = gaFromGoals ?? (Number(p.get("goals_away")) || 0);
+  const przerwaRaw = p.get("przerwa") || "";
+  const [hhFromPrzerwa, haFromPrzerwa] = przerwaRaw ? przerwaRaw.split(":").map(Number) : [null, null];
+  const hh = hhFromPrzerwa ?? (Number(p.get("half_home")) || 0);
+  const ha = haFromPrzerwa ?? (Number(p.get("half_away")) || 0);
+  const scorersHomeRaw = p.get("strzelcy_home") || p.get("scorers_home") || "";
+  const scorersAwayRaw = p.get("strzelcy_away") || p.get("scorers_away") || "";
   return {
     match_id: p.get("match_id"), mode, sport, grupa,
     team_home: p.get("team_home") || "Drużyna A", team_away: p.get("team_away") || "Drużyna B",
     sets_home: sh || 0, sets_away: sa || 0, set_scores,
     goals_home: gh || 0, goals_away: ga || 0,
     half_home: hh || 0, half_away: ha || 0,
-    scorers_home: parseScorers(p.get("strzelcy_home") || ""),
-    scorers_away: parseScorers(p.get("strzelcy_away") || ""),
+    scorers_home: parseScorers(scorersHomeRaw),
+    scorers_away: parseScorers(scorersAwayRaw),
     kolejka: p.get("kolejka") || "",
     color_home: p.get("color_home") || "#1a56db", color_away: p.get("color_away") || "#dc2626", color_liga: p.get("color_liga") || "#004aad",
     sponsorzy,
