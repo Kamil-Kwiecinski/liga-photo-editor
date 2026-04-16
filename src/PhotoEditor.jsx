@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from "react";
 
-const N8N_WEBHOOK_URL = "https://primary-production-9c937.up.railway.app/webhook/photo-editor";
+const N8N_WEBHOOK_URL = "https://primary-production-9c937.up.railway.app/webhook/03e681f1-61e0-4560-b798-49d5a4e5cc4c";
 
 const STYLES_RESULT = [
   { id: "classic", label: "Klasyczny" },
