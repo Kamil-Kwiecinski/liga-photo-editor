@@ -707,6 +707,16 @@ export default function PhotoEditor() {
   const [mvp, setMvp] = useState(m.mvp || "");
   const [extrasOpen, setExtrasOpen] = useState(false);
 
+  // Derived: m + live state inputów (dla lokalnego podglądu).
+  // Payload webhook używa state'ów bezpośrednio, ale preview komponenty
+  // czytają z m, więc musimy je scalić.
+  const mPreview = {
+    ...m,
+    kategoria_wiekowa: kategoriaWiekowa.trim(),
+    faza_rozgrywek: fazaRozgrywek.trim(),
+    mvp: mvp.trim(),
+  };
+
   const [status, setStatus] = useState(null);
   const [resultUrls, setResultUrls] = useState(null);
 
@@ -818,16 +828,21 @@ export default function PhotoEditor() {
       {!isFootball && <StyleSelector styles={availableStyles} value={graphicStyle} onChange={setGraphicStyle} />}
 
       {/* ── Preview panels ── */}
+      {/*
+        mPreview: merge initial URL-based m z aktualnymi wartościami state'ów
+        edytowanych w collapsible. Podgląd renderuje się live — jak usuniesz
+        MVP w inpucie, znika z podglądu.
+      */}
       <div className="flex gap-6 flex-wrap justify-center items-start">
         <PreviewPanel label="Post 1080×1080" targetW={1080} targetH={1080} image={postImage} imageNat={postImageNat} zoom={postZoom} bgPos={postBgPos} setBgPos={setPostBgPos}
           onUpload={loadImage((src, nat, initPos) => { setPostImage(src); setPostImageNat(nat); setPostZoom(150); setPostBgPos(initPos); setStatus(null); setResultUrls(null);}, 1080, 1080, 340)}
           onRemove={() => { setPostImage(null); setPostImageNat({ w: 0, h: 0 }); setPostZoom(150); setPostBgPos("0px 0px"); }}
-          m={m} maxPreviewW={340} showSets={showSets} selectedSponsors={selectedSponsors}
+          m={mPreview} maxPreviewW={340} showSets={showSets} selectedSponsors={selectedSponsors}
           onZoomChange={(z) => { setPostBgPos(prev => rescaleBgPos(prev, postZoom, z, 1080, 1080, 340, postImageNat.w, postImageNat.h)); setPostZoom(z); }} graphicStyle={graphicStyle} />
         <PreviewPanel label="Story 1080×1920" targetW={1080} targetH={1920} image={storyImage} imageNat={storyImageNat} zoom={storyZoom} bgPos={storyBgPos} setBgPos={setStoryBgPos}
           onUpload={loadImage((src, nat, initPos) => { setStoryImage(src); setStoryImageNat(nat); setStoryZoom(150); setStoryBgPos(initPos); setStatus(null); setResultUrls(null);}, 1080, 1920, 190)}
           onRemove={() => { setStoryImage(null); setStoryImageNat({ w: 0, h: 0 }); setStoryZoom(150); setStoryBgPos("0px 0px"); }}
-          m={m} maxPreviewW={190} showSets={showSets} selectedSponsors={selectedSponsors}
+          m={mPreview} maxPreviewW={190} showSets={showSets} selectedSponsors={selectedSponsors}
           onZoomChange={(z) => { setStoryBgPos(prev => rescaleBgPos(prev, storyZoom, z, 1080, 1920, 190, storyImageNat.w, storyImageNat.h)); setStoryZoom(z); }} graphicStyle={graphicStyle} />
       </div>
 
