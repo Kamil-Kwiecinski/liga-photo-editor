@@ -373,6 +373,12 @@
     var rowHome     = p.get('row_home')     || '';
     var rowAway     = p.get('row_away')     || '';
     var submittedBy = p.get('submitted_by') || '';
+
+    // Opcjonalne pola uniwersalne (S1) — pusty string = nie wyświetlaj na grafice
+    var kategoriaWiekowa = p.get('kategoria_wiekowa') || '';
+    var fazaRozgrywek    = p.get('faza_rozgrywek')    || '';
+    var mvp              = p.get('mvp')               || '';
+
     var RENDER_URL  = p.get('render_url')   || 'https://primary-production-9c937.up.railway.app/webhook/photo-editor';
 
     var hasClassic = false;
@@ -445,6 +451,9 @@
         sponsorzy: opts.sponsor ? sponsorzy : '',
         set_points: opts.set_points,
         submitted_by: submittedBy,
+        kategoria_wiekowa: kategoriaWiekowa,
+        faza_rozgrywek: fazaRozgrywek,
+        mvp: mvp,
         row_home: rowHome,
         row_away: rowAway
       };
@@ -554,6 +563,9 @@
           sponsorzy: opts.sponsor ? sponsorzy : '',
           set_points: opts.set_points,
           submitted_by: submittedBy,
+          kategoria_wiekowa: kategoriaWiekowa,
+          faza_rozgrywek: fazaRozgrywek,
+          mvp: mvp,
           row_home: rowHome,
           row_away: rowAway
         };
@@ -583,6 +595,9 @@
         + '&row_home='     + encodeURIComponent(rowHome)
         + '&row_away='     + encodeURIComponent(rowAway)
         + '&submitted_by=' + encodeURIComponent(submittedBy)
+        + '&kategoria_wiekowa=' + encodeURIComponent(kategoriaWiekowa)
+        + '&faza_rozgrywek='    + encodeURIComponent(fazaRozgrywek)
+        + '&mvp='               + encodeURIComponent(mvp)
         + '&render_url='   + encodeURIComponent(RENDER_URL)
         + '&classic_sent=1';
 
@@ -603,6 +618,9 @@
         + '&logo_liga='    + encodeURIComponent(logoLiga)
         + '&sponsorzy='    + (opts.sponsor ? encodeURIComponent(sponsorzy) : '')
         + '&set_points='   + (opts.set_points ? '1' : '0')
+        + '&kategoria_wiekowa=' + encodeURIComponent(kategoriaWiekowa)
+        + '&faza_rozgrywek='    + encodeURIComponent(fazaRozgrywek)
+        + '&mvp='               + encodeURIComponent(mvp)
         + '&return_url='   + encodeURIComponent(returnUrl);
 
       window.location.href = editorUrl;
