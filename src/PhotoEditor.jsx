@@ -34,7 +34,7 @@ function getMatchFromURL() {
       scorers_home: [{ name: "Kowalski", minute: 12 }, { name: "Nowak", minute: 45 }, { name: "Wiśniewski", minute: 78 }],
       scorers_away: [{ name: "Lewandowski", minute: 23 }, { name: "Zieliński", minute: 67 }],
       kolejka: "Ćwierćfinały",
-      kategoria_wiekowa: "", faza_rozgrywek: "", mvp: "",
+      kategoria_wiekowa: "", faza_rozgrywek: "", mvp: "", hashtag: "",
       color_home: "#d4ba0f", color_away: "#fc77c2", color_liga: "#004aad",
       sponsorzy: [],
       data_meczu: "07.04.2026", godzina: "19:20", miejsce: "Hala MOSiR Lubań",
@@ -68,6 +68,7 @@ function getMatchFromURL() {
     kategoria_wiekowa: p.get("kategoria_wiekowa") || "",
     faza_rozgrywek: p.get("faza_rozgrywek") || "",
     mvp: p.get("mvp") || "",
+    hashtag: p.get("hashtag") || "",
     color_home: p.get("color_home") || "#1a56db", color_away: p.get("color_away") || "#dc2626", color_liga: p.get("color_liga") || "#004aad",
     sponsorzy,
     data_meczu: p.get("data") || "", godzina: p.get("godzina") || "19:20", miejsce: p.get("miejsce") || "Hala MOSiR Lubań",
@@ -131,10 +132,8 @@ function FootballPhotoPost({ s, m, selectedSponsors }) {
     <div className="absolute inset-0 z-10" style={{ pointerEvents: "none" }}>
       <div style={{ position: "absolute", top: 20 * s, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.6)", borderRadius: "50%", width: 90 * s, height: 90 * s, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <span style={{ color: "#fff", fontSize: 12 * s, fontWeight: 700 }}>LIGA</span></div>
-      <div style={{ position: "absolute", top: 130 * s, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.55)", padding: `${5 * s}px ${20 * s}px`, borderRadius: 12 * s, display: "flex", gap: 10 * s, alignItems: "center" }}>
-        {m.grupa && <span style={{ color: "#fff", fontSize: 18 * s, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>{m.grupa}</span>}
-        {m.grupa && m.kolejka && <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 16 * s }}>·</span>}
-        {m.kolejka && <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 18 * s, fontWeight: 500, letterSpacing: 2, textTransform: "uppercase" }}>{m.kolejka}</span>}
+      <div style={{ position: "absolute", top: 130 * s, left: "50%", transform: "translateX(-50%)" }}>
+        <HeaderBadge s={s} m={m} fontSize={18} includeGrupa />
       </div>
       <div style={{ position: "absolute", top: "42%", left: 0, right: 0, transform: "translateY(-50%)", display: "flex", flexDirection: "column", alignItems: "center", gap: 8 * s }}>
         <div className="flex items-center justify-center" style={{ gap: 24 * s }}>
@@ -154,9 +153,13 @@ function FootballPhotoPost({ s, m, selectedSponsors }) {
         <ScorersBlock s={s} m={m} size={14} side="home" />
         <ScorersBlock s={s} m={m} size={14} side="away" />
       </div>
+      <div style={{ position: "absolute", bottom: (90 + sponsorBarH) * s, left: "50%", transform: "translateX(-50%)" }}>
+        <MvpBadgePreview s={s} m={m} fontSize={18} />
+      </div>
       {selectedSponsors.length > 0 && (
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 80 * s, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 * s }}>
           {selectedSponsors.map((url, i) => <img key={i} src={url} alt="" style={{ height: 42 * s, maxWidth: 120 * s, objectFit: "contain", filter: "brightness(0) invert(1)" }} />)}</div>)}
+      <HashtagPreview s={s} m={m} fontSize={14} offsetBottom={sponsorBarH} />
     </div>);
 }
 
@@ -166,10 +169,8 @@ function FootballPhotoStory({ s, m, selectedSponsors }) {
     <div className="absolute inset-0 z-10" style={{ pointerEvents: "none" }}>
       <div style={{ position: "absolute", top: 60 * s, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.6)", borderRadius: "50%", width: 120 * s, height: 120 * s, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <span style={{ color: "#fff", fontSize: 16 * s, fontWeight: 700 }}>LIGA</span></div>
-      <div style={{ position: "absolute", top: 210 * s, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.55)", padding: `${6 * s}px ${24 * s}px`, borderRadius: 16 * s, display: "flex", gap: 12 * s, alignItems: "center" }}>
-        {m.grupa && <span style={{ color: "#fff", fontSize: 24 * s, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>{m.grupa}</span>}
-        {m.grupa && m.kolejka && <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 22 * s }}>·</span>}
-        {m.kolejka && <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 24 * s, fontWeight: 500, letterSpacing: 2, textTransform: "uppercase" }}>{m.kolejka}</span>}
+      <div style={{ position: "absolute", top: 210 * s, left: "50%", transform: "translateX(-50%)" }}>
+        <HeaderBadge s={s} m={m} fontSize={24} includeGrupa />
       </div>
       <div style={{ position: "absolute", top: "45%", left: 0, right: 0, transform: "translateY(-50%)", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 * s }}>
         <div className="flex items-center justify-center" style={{ gap: 30 * s }}>
@@ -189,9 +190,13 @@ function FootballPhotoStory({ s, m, selectedSponsors }) {
         <ScorersBlock s={s} m={m} size={20} side="home" />
         <ScorersBlock s={s} m={m} size={20} side="away" />
       </div>
+      <div style={{ position: "absolute", bottom: (120 + sponsorBarH) * s, left: "50%", transform: "translateX(-50%)" }}>
+        <MvpBadgePreview s={s} m={m} fontSize={22} />
+      </div>
       {selectedSponsors.length > 0 && (
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 100 * s, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 * s }}>
           {selectedSponsors.map((url, i) => <img key={i} src={url} alt="" style={{ height: 52 * s, maxWidth: 140 * s, objectFit: "contain", filter: "brightness(0) invert(1)" }} />)}</div>)}
+      <HashtagPreview s={s} m={m} fontSize={16} offsetBottom={sponsorBarH} />
     </div>);
 }
 
@@ -204,7 +209,7 @@ function FootballNoPhotoPost({ s, m, selectedSponsors }) {
       <div style={{ position: "absolute", bottom: sponsorBarH * s, left: 0, right: 0, height: 6 * s, background: `linear-gradient(90deg, ${m.color_home}, ${m.color_liga}, ${m.color_away})` }} />
       <div className="absolute inset-0 flex flex-col items-center justify-center z-10" style={{ pointerEvents: "none", gap: 12 * s, paddingBottom: sponsorBarH * s }}>
         <LigaLogo s={s} m={m} size={90} light />
-        <KolejkaBadge s={s} m={m} fontSize={22} light />
+        <HeaderBadge s={s} m={m} fontSize={22} light includeGrupa />
         <div className="flex items-center justify-center" style={{ gap: 32 * s, marginTop: 10 * s }}>
           <TeamCircle s={s} m={m} team="home" size={140} fontSize={24} light />
           <span style={{ fontSize: 116 * s, fontWeight: 900, color: "#fff", lineHeight: 1, letterSpacing: 4 * s }}>{m.goals_home} : {m.goals_away}</span>
@@ -216,10 +221,12 @@ function FootballNoPhotoPost({ s, m, selectedSponsors }) {
             <ScorersBlock s={s} m={m} size={16} side="away" />
           </div>
         )}
+        <MvpBadgePreview s={s} m={m} fontSize={20} />
       </div>
       {selectedSponsors.length > 0 && (
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 80 * s, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 * s, zIndex: 20 }}>
-          {selectedSponsors.map((url, i) => <img key={i} src={url} alt="" style={{ height: 42 * s, maxWidth: 120 * s, objectFit: "contain", filter: "brightness(0) invert(1)" }} />)}</div>)}</div>);
+          {selectedSponsors.map((url, i) => <img key={i} src={url} alt="" style={{ height: 42 * s, maxWidth: 120 * s, objectFit: "contain", filter: "brightness(0) invert(1)" }} />)}</div>)}
+      <HashtagPreview s={s} m={m} fontSize={14} offsetBottom={sponsorBarH} /></div>);
 }
 
 function FootballNoPhotoStory({ s, m, selectedSponsors }) {
@@ -232,7 +239,7 @@ function FootballNoPhotoStory({ s, m, selectedSponsors }) {
       <div className="absolute inset-0 flex flex-col items-center justify-evenly z-10" style={{ pointerEvents: "none", paddingTop: 20 * s, paddingBottom: (20 + sponsorBarH) * s }}>
         <div className="flex flex-col items-center" style={{ gap: 12 * s }}>
           <LigaLogo s={s} m={m} size={120} light />
-          <KolejkaBadge s={s} m={m} fontSize={28} light /></div>
+          <HeaderBadge s={s} m={m} fontSize={28} light includeGrupa /></div>
         <TeamCircle s={s} m={m} team="home" size={200} fontSize={30} light />
         {hasScorers && <ScorersBlock s={s} m={m} size={24} side="home" center />}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
@@ -241,10 +248,12 @@ function FootballNoPhotoStory({ s, m, selectedSponsors }) {
         </div>
         {hasScorers && <ScorersBlock s={s} m={m} size={24} side="away" center />}
         <TeamCircle s={s} m={m} team="away" size={200} fontSize={30} light />
+        <MvpBadgePreview s={s} m={m} fontSize={24} />
       </div>
       {selectedSponsors.length > 0 && (
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 100 * s, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 * s, zIndex: 20 }}>
-          {selectedSponsors.map((url, i) => <img key={i} src={url} alt="" style={{ height: 52 * s, maxWidth: 140 * s, objectFit: "contain", filter: "brightness(0) invert(1)" }} />)}</div>)}</div>);
+          {selectedSponsors.map((url, i) => <img key={i} src={url} alt="" style={{ height: 52 * s, maxWidth: 140 * s, objectFit: "contain", filter: "brightness(0) invert(1)" }} />)}</div>)}
+      <HashtagPreview s={s} m={m} fontSize={16} offsetBottom={sponsorBarH} /></div>);
 }
 
 // ── CLASSIC OVERLAYS (with photo) ────────────────────────────────────────────
@@ -254,8 +263,9 @@ function PhotoOverlayPost({ s, m, showSets, selectedSponsors }) {
     <div className="absolute inset-0 flex flex-col items-center justify-end z-10" style={{ pointerEvents: "none", paddingBottom: (40 + sponsorBarH) * s }}>
       <div style={{ position: "absolute", top: 20 * s, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.6)", borderRadius: "50%", width: 90 * s, height: 90 * s, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <span style={{ color: "#fff", fontSize: 12 * s, fontWeight: 700 }}>LIGA</span></div>
-      <div style={{ position: "absolute", top: 130 * s, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.5)", padding: `${4 * s}px ${20 * s}px`, borderRadius: 12 * s }}>
-        <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 20 * s, fontWeight: 600, letterSpacing: 2, textTransform: "uppercase" }}>{m.kolejka}</span></div>
+      <div style={{ position: "absolute", top: 130 * s, left: "50%", transform: "translateX(-50%)" }}>
+        <HeaderBadge s={s} m={m} fontSize={20} />
+      </div>
       <div className="flex items-center justify-center" style={{ gap: 24 * s, marginBottom: showSets ? 10 * s : 20 * s }}>
         <div className="flex flex-col items-center" style={{ width: 240 * s }}>
           <div style={{ width: 100 * s, height: 100 * s, borderRadius: "50%", background: "rgba(0,0,0,0.4)", border: `${3 * s}px solid ${m.color_home}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -268,9 +278,11 @@ function PhotoOverlayPost({ s, m, showSets, selectedSponsors }) {
           <span style={{ background: m.color_away, color: "#0d1117", fontSize: 20 * s, fontWeight: 700, padding: `${4 * s}px ${16 * s}px`, borderRadius: 10 * s, marginTop: 10 * s }}>{m.team_away}</span></div>
       </div>
       {showSets && <SetScoresColored s={s} m={m} fontSize={28} />}
+      <MvpBadgePreview s={s} m={m} fontSize={20} />
       {selectedSponsors.length > 0 && (
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 80 * s, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 * s }}>
           {selectedSponsors.map((url, i) => <img key={i} src={url} alt="" style={{ height: 42 * s, maxWidth: 120 * s, objectFit: "contain", filter: "brightness(0) invert(1)" }} />)}</div>)}
+      <HashtagPreview s={s} m={m} fontSize={14} offsetBottom={sponsorBarH} />
     </div>);
 }
 function PhotoOverlayStory({ s, m, showSets, selectedSponsors }) {
@@ -279,8 +291,9 @@ function PhotoOverlayStory({ s, m, showSets, selectedSponsors }) {
     <div className="absolute inset-0 flex flex-col items-center justify-end z-10" style={{ pointerEvents: "none", paddingBottom: (80 + sponsorBarH) * s }}>
       <div style={{ position: "absolute", top: 60 * s, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.6)", borderRadius: "50%", width: 120 * s, height: 120 * s, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <span style={{ color: "#fff", fontSize: 16 * s, fontWeight: 700 }}>LIGA</span></div>
-      <div style={{ position: "absolute", top: 210 * s, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.5)", padding: `${6 * s}px ${24 * s}px`, borderRadius: 16 * s }}>
-        <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 26 * s, fontWeight: 600, letterSpacing: 2, textTransform: "uppercase" }}>{m.kolejka}</span></div>
+      <div style={{ position: "absolute", top: 210 * s, left: "50%", transform: "translateX(-50%)" }}>
+        <HeaderBadge s={s} m={m} fontSize={26} />
+      </div>
       <div className="flex items-center justify-center" style={{ gap: 30 * s, marginBottom: showSets ? 10 * s : 30 * s }}>
         <div className="flex flex-col items-center" style={{ width: 260 * s }}>
           <div style={{ width: 130 * s, height: 130 * s, borderRadius: "50%", background: "rgba(0,0,0,0.4)", border: `${4 * s}px solid ${m.color_home}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -293,9 +306,11 @@ function PhotoOverlayStory({ s, m, showSets, selectedSponsors }) {
           <span style={{ background: m.color_away, color: "#0d1117", fontSize: 26 * s, fontWeight: 700, padding: `${6 * s}px ${20 * s}px`, borderRadius: 12 * s, marginTop: 12 * s }}>{m.team_away}</span></div>
       </div>
       {showSets && <SetScoresColored s={s} m={m} fontSize={32} />}
+      <MvpBadgePreview s={s} m={m} fontSize={24} />
       {selectedSponsors.length > 0 && (
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 100 * s, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 * s }}>
           {selectedSponsors.map((url, i) => <img key={i} src={url} alt="" style={{ height: 52 * s, maxWidth: 140 * s, objectFit: "contain", filter: "brightness(0) invert(1)" }} />)}</div>)}
+      <HashtagPreview s={s} m={m} fontSize={16} offsetBottom={sponsorBarH} />
     </div>);
 }
 
@@ -319,7 +334,7 @@ function SplitPanelOverlayPost({ s, m, showSets, selectedSponsors }) {
         <div style={{ position: "absolute", top: 40 * s, left: 40 * s, right: 32 * s }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 * s }}>
             <div style={{ width: 42 * s, height: 42 * s, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ color: m.color_liga, fontSize: 9 * s, fontWeight: 700 }}>LIGA</span></div>
-            <span style={{ color: "rgba(255,255,255,0.45)", fontSize: 16 * s, fontWeight: 500, textTransform: "uppercase", letterSpacing: 3 }}>{m.kolejka}</span></div>
+            <HeaderBadge s={s} m={m} fontSize={16} /></div>
           <div style={{ fontFamily: "Anton, sans-serif", fontSize: 44 * s, fontWeight: 400, color: "rgba(255,255,255,0.12)", textTransform: "uppercase", letterSpacing: 3, lineHeight: 0.95, marginTop: 6 * s }}>WYNIK<br/>MECZU</div></div>
         <div style={{ position: "absolute", top: "50%", left: 40 * s, right: 32 * s, transform: "translateY(-50%)", display: "flex", flexDirection: "column", gap: sectionGap * s }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 * s }}>
@@ -343,8 +358,12 @@ function SplitPanelOverlayPost({ s, m, showSets, selectedSponsors }) {
           </div>
         )}</div>
       <div style={{ position: "absolute", bottom: (80 + sponsorBarH) * s, right: 40 * s, fontFamily: "Anton, sans-serif", fontSize: 120 * s, fontWeight: 400, color: "rgba(255,255,255,0.08)", lineHeight: 1.05, textAlign: "right", textTransform: "uppercase", letterSpacing: 2 }}>WYNIK<br/>MECZU</div>
+      <div style={{ position: "absolute", bottom: (40 + sponsorBarH) * s, right: 40 * s }}>
+        <MvpBadgePreview s={s} m={m} fontSize={16} />
+      </div>
       {selectedSponsors.length > 0 && (<div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 80 * s, background: "rgba(0,0,0,0.9)", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 * s }}>
-        {selectedSponsors.map((url, i) => <img key={i} src={url} alt="" style={{ height: 42 * s, maxWidth: 120 * s, objectFit: "contain", filter: "brightness(0) invert(1)", opacity: 0.7 }} />)}</div>)}</div>);
+        {selectedSponsors.map((url, i) => <img key={i} src={url} alt="" style={{ height: 42 * s, maxWidth: 120 * s, objectFit: "contain", filter: "brightness(0) invert(1)", opacity: 0.7 }} />)}</div>)}
+      <HashtagPreview s={s} m={m} fontSize={12} offsetBottom={sponsorBarH} /></div>);
 }
 function SplitPanelOverlayStory({ s, m, showSets, selectedSponsors }) {
   const splitAt = 0.55; const sponsorBarH = selectedSponsors.length > 0 ? 100 : 0;
@@ -355,7 +374,7 @@ function SplitPanelOverlayStory({ s, m, showSets, selectedSponsors }) {
       <div style={{ position: "absolute", top: `${splitAt * 100}%`, left: 0, width: "100%", height: 4 * s, background: `linear-gradient(90deg, ${m.color_home}, ${m.color_liga}, ${m.color_away})`, opacity: 0.5 }} />
       <div style={{ position: "absolute", top: 40 * s, left: 40 * s, display: "flex", alignItems: "center", gap: 16 * s }}>
         <div style={{ width: 48 * s, height: 48 * s, borderRadius: "50%", background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ color: "#fff", fontSize: 8 * s, fontWeight: 700 }}>LIGA</span></div>
-        <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 22 * s, fontWeight: 600, textTransform: "uppercase", letterSpacing: 3 }}>{m.kolejka}</span></div>
+        <HeaderBadge s={s} m={m} fontSize={22} /></div>
       <div style={{ position: "absolute", bottom: sponsorBarH * s, left: 0, width: "100%", height: `${(1 - splitAt) * 100}%`, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 36 * s }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 36 * s }}>
           <div style={{ textAlign: "center" }}>
@@ -374,9 +393,11 @@ function SplitPanelOverlayStory({ s, m, showSets, selectedSponsors }) {
                 <span style={{ fontSize: 28 * s, color: "rgba(255,255,255,0.3)", margin: `0 ${2 * s}px` }}>:</span>
                 <span style={{ fontSize: 44 * s, fontWeight: homeWon ? 400 : 700, color: homeWon ? "rgba(255,255,255,0.5)" : m.color_away }}>{sc.away}</span></div>); })}
           </div>
-        )}</div>
+        )}
+        <MvpBadgePreview s={s} m={m} fontSize={22} /></div>
       {selectedSponsors.length > 0 && (<div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 100 * s, background: "rgba(0,0,0,0.9)", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 * s }}>
-        {selectedSponsors.map((url, i) => <img key={i} src={url} alt="" style={{ height: 52 * s, maxWidth: 120 * s, objectFit: "contain", filter: "brightness(0) invert(1)", opacity: 0.7 }} />)}</div>)}</div>);
+        {selectedSponsors.map((url, i) => <img key={i} src={url} alt="" style={{ height: 52 * s, maxWidth: 120 * s, objectFit: "contain", filter: "brightness(0) invert(1)", opacity: 0.7 }} />)}</div>)}
+      <HashtagPreview s={s} m={m} fontSize={16} offsetBottom={sponsorBarH} /></div>);
 }
 
 // ── SPLIT PANEL OVERLAYS — PREVIEW ───────────────────────────────────────────
@@ -394,7 +415,7 @@ function SplitPanelPreviewPost({ s, m, selectedSponsors }) {
         <div style={{ position: "absolute", top: 40 * s, left: 40 * s, right: 32 * s }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 * s }}>
             <div style={{ width: 42 * s, height: 42 * s, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ color: m.color_liga, fontSize: 9 * s, fontWeight: 700 }}>LIGA</span></div>
-            <span style={{ color: "rgba(255,255,255,0.45)", fontSize: 16 * s, fontWeight: 500, textTransform: "uppercase", letterSpacing: 3 }}>{m.kolejka}</span></div>
+            <HeaderBadge s={s} m={m} fontSize={16} /></div>
           <div style={{ fontFamily: "Anton, sans-serif", fontSize: 44 * s, fontWeight: 400, color: "rgba(255,255,255,0.12)", textTransform: "uppercase", letterSpacing: 3, lineHeight: 0.95, marginTop: 6 * s }}>ZAPOWIEDŹ<br/>MECZU</div></div>
         <div style={{ position: "absolute", top: "50%", left: 40 * s, right: 32 * s, transform: "translateY(-50%)", display: "flex", flexDirection: "column", gap: 6 * s }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 * s }}>
@@ -412,8 +433,12 @@ function SplitPanelPreviewPost({ s, m, selectedSponsors }) {
             <span style={{ color: "#fff", fontSize: 22 * s, fontWeight: 600 }}>{m.godzina}</span></div>
           <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 14 * s }}>{m.miejsce}</div></div></div>
       <div style={{ position: "absolute", bottom: (80 + sponsorBarH) * s, right: 40 * s, fontFamily: "Anton, sans-serif", fontSize: 120 * s, fontWeight: 400, color: "rgba(255,255,255,0.08)", lineHeight: 1.05, textAlign: "right", textTransform: "uppercase", letterSpacing: 2 }}>GAME<br/>DAY</div>
+      <div style={{ position: "absolute", bottom: (40 + sponsorBarH) * s, right: 40 * s }}>
+        <MvpBadgePreview s={s} m={m} fontSize={16} />
+      </div>
       {selectedSponsors.length > 0 && (<div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 80 * s, background: "rgba(0,0,0,0.9)", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 * s }}>
-        {selectedSponsors.map((url, i) => <img key={i} src={url} alt="" style={{ height: 42 * s, maxWidth: 120 * s, objectFit: "contain", filter: "brightness(0) invert(1)", opacity: 0.7 }} />)}</div>)}</div>);
+        {selectedSponsors.map((url, i) => <img key={i} src={url} alt="" style={{ height: 42 * s, maxWidth: 120 * s, objectFit: "contain", filter: "brightness(0) invert(1)", opacity: 0.7 }} />)}</div>)}
+      <HashtagPreview s={s} m={m} fontSize={12} offsetBottom={sponsorBarH} /></div>);
 }
 function SplitPanelPreviewStory({ s, m, selectedSponsors }) {
   const splitAt = 0.55; const sponsorBarH = selectedSponsors.length > 0 ? 100 : 0;
@@ -424,7 +449,7 @@ function SplitPanelPreviewStory({ s, m, selectedSponsors }) {
       <div style={{ position: "absolute", top: `${splitAt * 100}%`, left: 0, width: "100%", height: 4 * s, background: `linear-gradient(90deg, ${m.color_home}, ${m.color_liga}, ${m.color_away})`, opacity: 0.5 }} />
       <div style={{ position: "absolute", top: 40 * s, left: 40 * s, display: "flex", alignItems: "center", gap: 16 * s }}>
         <div style={{ width: 48 * s, height: 48 * s, borderRadius: "50%", background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ color: "#fff", fontSize: 8 * s, fontWeight: 700 }}>LIGA</span></div>
-        <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 22 * s, fontWeight: 600, textTransform: "uppercase", letterSpacing: 3 }}>{m.kolejka}</span></div>
+        <HeaderBadge s={s} m={m} fontSize={22} /></div>
       <div style={{ position: "absolute", bottom: sponsorBarH * s, left: 0, width: "100%", height: `${(1 - splitAt) * 100}%`, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 36 * s }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 36 * s }}>
           <div style={{ textAlign: "center" }}>
@@ -436,9 +461,11 @@ function SplitPanelPreviewStory({ s, m, selectedSponsors }) {
             <div style={{ color: "#fff", fontSize: 30 * s, fontWeight: 700, marginTop: 14 * s, textTransform: "uppercase" }}>{m.team_away}</div></div></div>
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: 44 * s, fontWeight: 700, color: "#fff", letterSpacing: 2 }}>{m.data_meczu} • {m.godzina}</div>
-          <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 22 * s, marginTop: 6 * s }}>{m.miejsce}</div></div></div>
+          <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 22 * s, marginTop: 6 * s }}>{m.miejsce}</div></div>
+        <MvpBadgePreview s={s} m={m} fontSize={22} /></div>
       {selectedSponsors.length > 0 && (<div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 100 * s, background: "rgba(0,0,0,0.9)", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 * s }}>
-        {selectedSponsors.map((url, i) => <img key={i} src={url} alt="" style={{ height: 52 * s, maxWidth: 120 * s, objectFit: "contain", filter: "brightness(0) invert(1)", opacity: 0.7 }} />)}</div>)}</div>);
+        {selectedSponsors.map((url, i) => <img key={i} src={url} alt="" style={{ height: 52 * s, maxWidth: 120 * s, objectFit: "contain", filter: "brightness(0) invert(1)", opacity: 0.7 }} />)}</div>)}
+      <HashtagPreview s={s} m={m} fontSize={16} offsetBottom={sponsorBarH} /></div>);
 }
 
 // ── NO-PHOTO VARIANTS ────────────────────────────────────────────────────────
@@ -461,10 +488,12 @@ function NoPhotoPost({ s, m, showSets, selectedSponsors }) {
           <div style={{ textAlign: "center", marginTop: 10 * s }}>
             <div style={{ fontSize: 28 * s, fontWeight: 700, color: "#fff" }}>{m.data_meczu} • {m.godzina}</div>
             <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 18 * s, marginTop: 4 * s }}>{m.miejsce}</div></div>
-        ) : (showSets && <SetTable s={s} m={m} />)}</div>
+        ) : (showSets && <SetTable s={s} m={m} />)}
+        <MvpBadgePreview s={s} m={m} fontSize={20} /></div>
       {selectedSponsors.length > 0 && (
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 80 * s, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 * s, zIndex: 20 }}>
-          {selectedSponsors.map((url, i) => <img key={i} src={url} alt="" style={{ height: 42 * s, maxWidth: 120 * s, objectFit: "contain", filter: "brightness(0) invert(1)" }} />)}</div>)}</div>);
+          {selectedSponsors.map((url, i) => <img key={i} src={url} alt="" style={{ height: 42 * s, maxWidth: 120 * s, objectFit: "contain", filter: "brightness(0) invert(1)" }} />)}</div>)}
+      <HashtagPreview s={s} m={m} fontSize={14} offsetBottom={sponsorBarH} /></div>);
 }
 function NoPhotoStory({ s, m, showSets, selectedSponsors }) {
   if (m.sport === "football") return <FootballNoPhotoStory s={s} m={m} selectedSponsors={selectedSponsors} />;
@@ -490,10 +519,12 @@ function NoPhotoStory({ s, m, showSets, selectedSponsors }) {
         <TeamCircle s={s} m={m} team="away" size={200} fontSize={30} light />
         {isPreview && (<div style={{ textAlign: "center" }}>
           <div style={{ fontSize: 48 * s, fontWeight: 700, color: "#fff", letterSpacing: 2 }}>{m.data_meczu} • {m.godzina}</div>
-          <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 28 * s, marginTop: 6 * s }}>{m.miejsce}</div></div>)}</div>
+          <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 28 * s, marginTop: 6 * s }}>{m.miejsce}</div></div>)}
+        <MvpBadgePreview s={s} m={m} fontSize={24} /></div>
       {selectedSponsors.length > 0 && (
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 100 * s, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 * s, zIndex: 20 }}>
-          {selectedSponsors.map((url, i) => <img key={i} src={url} alt="" style={{ height: 52 * s, maxWidth: 140 * s, objectFit: "contain", filter: "brightness(0) invert(1)" }} />)}</div>)}</div>);
+          {selectedSponsors.map((url, i) => <img key={i} src={url} alt="" style={{ height: 52 * s, maxWidth: 140 * s, objectFit: "contain", filter: "brightness(0) invert(1)" }} />)}</div>)}
+      <HashtagPreview s={s} m={m} fontSize={16} offsetBottom={sponsorBarH} /></div>);
 }
 
 // ── SHARED COMPONENTS ────────────────────────────────────────────────────────
@@ -522,9 +553,49 @@ function LigaLogo({ s, m, size, light }) {
   return (<div style={{ width: size * s, height: size * s, borderRadius: "50%", background: light ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
     <span style={{ color: light ? m.color_liga : "#fff", fontSize: (size * 0.16) * s, fontWeight: 700 }}>LIGA</span></div>);
 }
-function KolejkaBadge({ s, m, fontSize, light }) {
-  return (<div style={{ background: light ? "rgba(0,74,173,0.5)" : "rgba(0,0,0,0.5)", padding: `${6 * s}px ${28 * s}px`, borderRadius: 20 * s }}>
-    <span style={{ color: "rgba(255,255,255,0.7)", fontSize: fontSize * s, fontWeight: 600, letterSpacing: 2, textTransform: "uppercase" }}>{m.kolejka}</span></div>);
+// HeaderBadge — analog HeaderStrip z sport-graphics-api: łączy opcjonalne segmenty kropką.
+// Auto-scaling fontu przy długim tekście (mirror computeFontSize z backendu).
+function computeHeaderFontSize(textLen, base) {
+  if (textLen <= 22) return base;
+  if (textLen <= 30) return Math.round(base * 0.86);
+  if (textLen <= 38) return Math.round(base * 0.74);
+  if (textLen <= 48) return Math.round(base * 0.64);
+  return Math.round(base * 0.56);
+}
+function HeaderBadge({ s, m, fontSize, light, includeGrupa }) {
+  const segments = [];
+  if (includeGrupa && m.grupa) segments.push(m.grupa);
+  if (m.kolejka)           segments.push(m.kolejka);
+  if (m.kategoria_wiekowa) segments.push(m.kategoria_wiekowa);
+  if (m.faza_rozgrywek)    segments.push(m.faza_rozgrywek);
+  const text = segments.join(" · ");
+  if (!text) return null;
+  const fs = computeHeaderFontSize(text.length, fontSize);
+  return (<div style={{ background: light ? "rgba(0,74,173,0.5)" : "rgba(0,0,0,0.5)", padding: `${6 * s}px ${28 * s}px`, borderRadius: 20 * s, maxWidth: "90%" }}>
+    <span style={{ color: "rgba(255,255,255,0.85)", fontSize: fs * s, fontWeight: 600, letterSpacing: 2, textTransform: "uppercase", whiteSpace: "nowrap" }}>{text}</span></div>);
+}
+// Legacy alias — wszystkie istniejące <KolejkaBadge /> renderują HeaderBadge
+function KolejkaBadge(props) {
+  return <HeaderBadge {...props} />;
+}
+
+// MvpBadgePreview — chip MVP w podglądzie (analog MvpChip z sport-graphics-api)
+function MvpBadgePreview({ s, m, fontSize }) {
+  const text = (m.mvp || "").trim();
+  if (!text) return null;
+  const labelSize = Math.max(10, Math.round(fontSize * 0.65));
+  return (<div style={{ display: "inline-flex", alignItems: "center", gap: 10 * s, background: "rgba(255,215,0,0.14)", border: `${1 * s}px solid rgba(255,215,0,0.45)`, padding: `${10 * s}px ${24 * s}px`, borderRadius: 999 * s, marginTop: 10 * s }}>
+    <span style={{ color: "#ffd700", fontSize: labelSize * s, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>MVP</span>
+    <span style={{ color: "#fff", fontSize: fontSize * s, fontWeight: 600, letterSpacing: 1, whiteSpace: "nowrap" }}>{text}</span></div>);
+}
+
+// HashtagPreview — stopka hashtag (tylko preview — w edytorze pobieramy z URL param)
+function HashtagPreview({ s, m, fontSize, offsetBottom }) {
+  const raw = (m.hashtag || "").trim();
+  if (!raw) return null;
+  const normalized = raw.startsWith("#") ? raw : `#${raw}`;
+  return (<div style={{ position: "absolute", bottom: (offsetBottom + 8) * s, left: 0, right: 0, textAlign: "center", zIndex: 5, pointerEvents: "none" }}>
+    <span style={{ color: "rgba(255,255,255,0.55)", fontSize: fontSize * s, fontWeight: 500, letterSpacing: 1.5 }}>{normalized}</span></div>);
 }
 function TeamCircle({ s, m, team, size, fontSize, light }) {
   const isHome = team === "home"; const color = isHome ? m.color_home : m.color_away; const name = isHome ? m.team_home : m.team_away;
