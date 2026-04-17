@@ -2,13 +2,20 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import PhotoEditor from './PhotoEditor'
 import ResultPage from './ResultPage'
+import MvpEditor from './MvpEditor'
 
 function App() {
   const params = new URLSearchParams(window.location.search);
   const view = params.get('view');
+  const mode = params.get('mode');
 
   if (view === 'result') {
     return <ResultPage />;
+  }
+
+  // Dedykowany edytor MVP grafiki (osobny flow od wyniku meczu)
+  if (mode === 'mvp') {
+    return <MvpEditor />;
   }
 
   return <PhotoEditor />;
