@@ -381,6 +381,282 @@ function MvpPhotoOverlay({ s, m, isStory }) {
   );
 }
 
+// ── SPLIT PANEL MVP ───────────────────────────────────────────────────────────
+// Post: lewy ciemny panel 454px, reszta prawa = foto.
+// Story: górna połowa foto (55%), dolna połowa panel.
+function MvpSplitPreview({ s, m, image, zoom, bgPos, isStory }) {
+  const sponsorBarH = m.sponsorzy.length > 0 ? (isStory ? 100 : 80) : 0;
+  const cTeam = m.team_color;
+  const cLiga = m.liga_color;
+
+  if (isStory) {
+    // Story: zdjęcie górna połowa, panel dolna
+    const splitAt = 0.55;
+    const photoH = 1920 * splitAt;
+    return (
+      <div className="absolute inset-0" style={{ background: "#0a0a0a" }}>
+        {/* Photo górna */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: photoH * s,
+            backgroundImage: `url('${image}')`,
+            backgroundSize: `${zoom}%`,
+            backgroundPosition: bgPos,
+            backgroundRepeat: "no-repeat",
+          }}
+        />
+        {/* Gradient przejście */}
+        <div
+          style={{
+            position: "absolute",
+            top: (photoH - 200) * s,
+            left: 0,
+            right: 0,
+            height: 200 * s,
+            background: "linear-gradient(180deg, transparent, #0a0a0a)",
+          }}
+        />
+        {/* Accent lines */}
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6 * s, background: `linear-gradient(90deg, ${cTeam}, ${cLiga}, #ffd700)` }} />
+        <div style={{ position: "absolute", bottom: sponsorBarH * s, left: 0, right: 0, height: 6 * s, background: `linear-gradient(90deg, ${cTeam}, ${cLiga}, #ffd700)` }} />
+        <div style={{ position: "absolute", top: (photoH - 3) * s, left: 0, right: 0, height: 3 * s, background: `linear-gradient(90deg, ${cTeam}, ${cLiga}, #ffd700)`, opacity: 0.6 }} />
+
+        {/* Top overlay */}
+        <div
+          className="absolute inset-0 flex flex-col items-center z-10"
+          style={{
+            pointerEvents: "none",
+            paddingTop: 60 * s,
+            gap: 14 * s,
+            justifyContent: "flex-start",
+          }}
+        >
+          <div style={{ background: "rgba(0,0,0,0.6)", borderRadius: "50%", padding: 14 * s }}>
+            <LigaLogoSmall s={s} m={m} size={80} />
+          </div>
+          <HeaderBadge s={s} m={m} fontSize={24} />
+        </div>
+
+        {/* Dolny panel z info */}
+        <div
+          style={{
+            position: "absolute",
+            top: photoH * s,
+            left: 0,
+            right: 0,
+            bottom: sponsorBarH * s,
+            background: "linear-gradient(180deg, #0a0a0a, #000611)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: `${40 * s}px ${60 * s}px`,
+            gap: 20 * s,
+          }}
+        >
+          <MvpTitle s={s} fontSize={48} />
+          <div
+            style={{
+              fontFamily: "Oswald, sans-serif",
+              fontSize: computeNameSize(m.player_name.length, 80) * s,
+              fontWeight: 800,
+              color: "#fff",
+              textTransform: "uppercase",
+              letterSpacing: 3,
+              lineHeight: 1,
+              textAlign: "center",
+            }}
+          >
+            {m.player_name || "IMIĘ NAZWISKO"}
+          </div>
+          {(m.player_number || m.player_position) && (
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 16 * s, fontFamily: "Oswald, sans-serif" }}>
+              {m.player_number && (
+                <span style={{ background: cTeam, color: "#0d1117", fontSize: 28 * s, fontWeight: 800, padding: `${6 * s}px ${18 * s}px`, borderRadius: 12 * s }}>
+                  #{m.player_number}
+                </span>
+              )}
+              {m.player_position && (
+                <span style={{ color: "rgba(255,255,255,0.85)", fontSize: 24 * s, fontWeight: 500, letterSpacing: 2, textTransform: "uppercase" }}>
+                  {m.player_position}
+                </span>
+              )}
+            </div>
+          )}
+          <div style={{ background: cTeam, color: "#0d1117", fontFamily: "Oswald, sans-serif", fontSize: 30 * s, fontWeight: 700, padding: `${8 * s}px ${28 * s}px`, borderRadius: 14 * s, letterSpacing: 2, textTransform: "uppercase" }}>
+            {m.team_name || "DRUŻYNA"}
+          </div>
+          <div style={{ width: 500 * s, height: 1, background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent)", marginTop: 6 * s }} />
+          <MatchContext s={s} m={m} fontSize={28} />
+        </div>
+
+        <SponsorBar s={s} sponsors={m.sponsorzy} height={sponsorBarH} />
+      </div>
+    );
+  }
+
+  // Post: panel lewy 454px, zdjęcie prawo
+  const panelW = 454;
+  return (
+    <div className="absolute inset-0" style={{ background: "#0a0a0a" }}>
+      {/* Photo */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          backgroundImage: `url('${image}')`,
+          backgroundSize: `${zoom}%`,
+          backgroundPosition: bgPos,
+          backgroundRepeat: "no-repeat",
+        }}
+      />
+      {/* Gradient przejście panel→foto */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: panelW * s,
+          width: 200 * s,
+          height: "100%",
+          background: "linear-gradient(90deg, #0a0a0a, transparent)",
+          zIndex: 3,
+        }}
+      />
+      {/* Lewy panel */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: panelW * s,
+          height: "100%",
+          background: "linear-gradient(180deg, #111, #0a0a0a)",
+          zIndex: 5,
+        }}
+      >
+        {/* Top: logo + header */}
+        <div style={{ position: "absolute", top: 40 * s, left: 40 * s, right: 32 * s }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 * s }}>
+            <div
+              style={{
+                width: 42 * s,
+                height: 42 * s,
+                borderRadius: "50%",
+                background: "rgba(255,255,255,0.08)",
+                border: `${1 * s}px solid rgba(255,255,255,0.12)`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                overflow: "hidden",
+              }}
+            >
+              {m.liga_logo ? (
+                <img src={m.liga_logo} alt="" style={{ width: 36 * s, height: 36 * s, objectFit: "contain" }} />
+              ) : (
+                <span style={{ color: cLiga, fontSize: 9 * s, fontWeight: 700, fontFamily: "Oswald, sans-serif" }}>LIGA</span>
+              )}
+            </div>
+            <div style={{ flex: 1 }}>
+              <HeaderBadge s={s} m={m} fontSize={18} />
+            </div>
+          </div>
+        </div>
+
+        {/* Center: MVP + player */}
+        <div
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: 40 * s,
+            right: 32 * s,
+            transform: "translateY(-50%)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 14 * s,
+          }}
+        >
+          <MvpTitle s={s} fontSize={28} />
+          <div
+            style={{
+              fontFamily: "Oswald, sans-serif",
+              fontSize: computeNameSize(m.player_name.length, 48) * s,
+              fontWeight: 800,
+              color: "#fff",
+              textTransform: "uppercase",
+              letterSpacing: 2,
+              lineHeight: 1.05,
+              marginTop: 6 * s,
+            }}
+          >
+            {m.player_name || "IMIĘ"}
+          </div>
+          {(m.player_number || m.player_position) && (
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 10 * s, fontFamily: "Oswald, sans-serif", marginTop: 4 * s }}>
+              {m.player_number && (
+                <span style={{ background: cTeam, color: "#0d1117", fontSize: 18 * s, fontWeight: 800, padding: `${3 * s}px ${12 * s}px`, borderRadius: 8 * s }}>
+                  #{m.player_number}
+                </span>
+              )}
+              {m.player_position && (
+                <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 15 * s, fontWeight: 500, letterSpacing: 1.5, textTransform: "uppercase" }}>
+                  {m.player_position}
+                </span>
+              )}
+            </div>
+          )}
+          <div
+            style={{
+              display: "inline-block",
+              background: cTeam,
+              color: "#0d1117",
+              fontFamily: "Oswald, sans-serif",
+              fontSize: 20 * s,
+              fontWeight: 700,
+              padding: `${5 * s}px ${18 * s}px`,
+              borderRadius: 10 * s,
+              letterSpacing: 1.5,
+              textTransform: "uppercase",
+              marginTop: 10 * s,
+              width: "fit-content",
+            }}
+          >
+            {m.team_name || "DRUŻYNA"}
+          </div>
+        </div>
+
+        {/* Bottom: kontekst */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: (40 + sponsorBarH) * s,
+            left: 40 * s,
+            right: 32 * s,
+          }}
+        >
+          <div
+            style={{
+              width: "60%",
+              height: 1,
+              background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent)",
+              marginBottom: 14 * s,
+            }}
+          />
+          <MatchContext s={s} m={m} fontSize={16} />
+        </div>
+      </div>
+
+      <SponsorBar s={s} sponsors={m.sponsorzy} height={sponsorBarH} />
+    </div>
+  );
+}
+
 // ── NO-PHOTO MVP (fallback kiedy brak foto) ──────────────────────────────────
 function MvpNoPhoto({ s, m, isStory }) {
   const sponsorBarH = m.sponsorzy.length > 0 ? (isStory ? 100 : 80) : 0;
@@ -605,6 +881,7 @@ function PreviewPanel({
   onUpload,
   onRemove,
   onZoomChange,
+  graphicStyle,
 }) {
   const isStory = targetH > targetW;
   const scale = maxPreviewW / targetW;
@@ -667,19 +944,30 @@ function PreviewPanel({
         }}
       >
         {image ? (
-          <>
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                backgroundImage: `url('${image}')`,
-                backgroundSize: `${zoom}%`,
-                backgroundPosition: bgPos,
-                backgroundRepeat: "no-repeat",
-              }}
+          graphicStyle === "split_panel" ? (
+            <MvpSplitPreview
+              s={s}
+              m={m}
+              image={image}
+              zoom={zoom}
+              bgPos={bgPos}
+              isStory={isStory}
             />
-            <MvpPhotoOverlay s={s} m={m} isStory={isStory} />
-          </>
+          ) : (
+            <>
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  backgroundImage: `url('${image}')`,
+                  backgroundSize: `${zoom}%`,
+                  backgroundPosition: bgPos,
+                  backgroundRepeat: "no-repeat",
+                }}
+              />
+              <MvpPhotoOverlay s={s} m={m} isStory={isStory} />
+            </>
+          )
         ) : (
           <MvpNoPhoto s={s} m={m} isStory={isStory} />
         )}
@@ -1016,6 +1304,58 @@ export default function MvpEditor() {
         </p>
       </div>
 
+      {/* Styl grafiki — zawsze widoczny, live aktualizuje preview */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          padding: "10px 14px",
+          background: "rgba(0,0,0,0.04)",
+          borderRadius: 12,
+        }}
+      >
+        <span
+          style={{
+            fontSize: 11,
+            color: "var(--color-text-secondary, #888)",
+            fontWeight: 600,
+            textTransform: "uppercase",
+            letterSpacing: 1,
+          }}
+        >
+          Styl grafiki:
+        </span>
+        {[
+          { id: "classic", label: "Klasyczny" },
+          { id: "split_panel", label: "Split Panel" },
+        ].map((s) => (
+          <button
+            key={s.id}
+            onClick={() => setGraphicStyle(s.id)}
+            style={{
+              padding: "6px 14px",
+              borderRadius: 8,
+              border:
+                graphicStyle === s.id
+                  ? "2px solid #ffd700"
+                  : "2px solid rgba(0,0,0,0.1)",
+              background:
+                graphicStyle === s.id
+                  ? "rgba(255,215,0,0.15)"
+                  : "transparent",
+              color: "var(--color-text-primary, #222)",
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer",
+              transition: "all 0.15s",
+            }}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
+
       {/* Preview panels */}
       <div className="flex gap-6 flex-wrap justify-center items-start">
         <PreviewPanel
@@ -1048,6 +1388,7 @@ export default function MvpEditor() {
           }}
           m={mPreview}
           maxPreviewW={340}
+          graphicStyle={graphicStyle}
           onZoomChange={(z) => {
             setPostBgPos((prev) =>
               rescaleBgPos(
@@ -1094,6 +1435,7 @@ export default function MvpEditor() {
           }}
           m={mPreview}
           maxPreviewW={190}
+          graphicStyle={graphicStyle}
           onZoomChange={(z) => {
             setStoryBgPos((prev) =>
               rescaleBgPos(
@@ -1160,58 +1502,6 @@ export default function MvpEditor() {
         </div>
       </div>
 
-      {/* Styl grafiki — tylko gdy jest zdjęcie */}
-      {(postImage || storyImage) && (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            marginTop: 12,
-            padding: "10px 14px",
-            background: "rgba(0,0,0,0.04)",
-            borderRadius: 12,
-          }}
-        >
-          <span
-            style={{
-              fontSize: 11,
-              color: "var(--color-text-secondary, #888)",
-              fontWeight: 600,
-              textTransform: "uppercase",
-              letterSpacing: 1,
-            }}
-          >
-            Styl grafiki:
-          </span>
-          {[
-            { id: "classic", label: "Klasyczny" },
-            { id: "split_panel", label: "Split Panel" },
-          ].map((s) => (
-            <button
-              key={s.id}
-              onClick={() => setGraphicStyle(s.id)}
-              style={{
-                padding: "6px 14px",
-                borderRadius: 8,
-                border:
-                  graphicStyle === s.id
-                    ? "2px solid #ffd700"
-                    : "2px solid rgba(0,0,0,0.1)",
-                background:
-                  graphicStyle === s.id ? "rgba(255,215,0,0.15)" : "transparent",
-                color: "var(--color-text-primary, #222)",
-                fontSize: 12,
-                fontWeight: 600,
-                cursor: "pointer",
-                transition: "all 0.15s",
-              }}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
-      )}
 
       {/* Sponsors selector */}
       {urlData.sponsorzy.length > 0 && (
