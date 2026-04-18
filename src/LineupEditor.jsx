@@ -94,11 +94,11 @@ function extractLastName(fullName) {
 }
 
 function computeNameFontSize(len, base) {
-  if (len <= 10) return base;
-  if (len <= 14) return Math.round(base * 0.86);
-  if (len <= 18) return Math.round(base * 0.72);
-  if (len <= 24) return Math.round(base * 0.6);
-  return Math.round(base * 0.5);
+  if (len <= 7) return base;
+  if (len <= 10) return Math.round(base * 0.82);
+  if (len <= 13) return Math.round(base * 0.68);
+  if (len <= 17) return Math.round(base * 0.56);
+  return Math.round(base * 0.46);
 }
 
 // ── PLAYER TILE (preview) ────────────────────────────────────────────────────
@@ -142,42 +142,24 @@ function PlayerTilePreview({ s, team, player, width }) {
           }}
         />
       ) : (
-        <>
-          {player.number ? (
-            <div
-              style={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -55%)",
-                fontFamily: "Oswald, sans-serif",
-                fontSize: bgNumberSize * s,
-                fontWeight: 900,
-                color: "rgba(255,255,255,0.12)",
-                lineHeight: 1,
-                letterSpacing: -4 * s,
-              }}
-            >
-              {player.number}
-            </div>
-          ) : null}
+        player.number ? (
           <div
             style={{
               position: "absolute",
-              bottom: Math.round(size * 0.3) * s,
-              left: 0,
-              right: 0,
-              textAlign: "center",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -55%)",
               fontFamily: "Oswald, sans-serif",
-              fontSize: Math.round(size * 0.28) * s,
-              fontWeight: 800,
-              color: "rgba(255,255,255,0.92)",
-              letterSpacing: 2,
+              fontSize: bgNumberSize * s,
+              fontWeight: 900,
+              color: "rgba(255,255,255,0.18)",
+              lineHeight: 1,
+              letterSpacing: -4 * s,
             }}
           >
-            {displayName.charAt(0)}
+            {player.number}
           </div>
-        </>
+        ) : null
       )}
 
       {/* Bottom gradient */}
@@ -269,14 +251,14 @@ function PlayerTilePreview({ s, team, player, width }) {
         style={{
           position: "absolute",
           bottom: Math.round(size * 0.06) * s,
-          left: Math.round(size * 0.05) * s,
-          right: Math.round(size * 0.05) * s,
+          left: Math.round(size * 0.03) * s,
+          right: Math.round(size * 0.03) * s,
           fontFamily: "Oswald, sans-serif",
           fontSize: nameFont * s,
           fontWeight: 800,
           color: "#fff",
           textTransform: "uppercase",
-          letterSpacing: 2,
+          letterSpacing: displayName.length > 8 ? 0 : 1,
           lineHeight: 1,
           textAlign: "center",
           whiteSpace: "nowrap",
@@ -302,10 +284,10 @@ function LineupPreview({ targetW, targetH, maxPreviewW, m }) {
   const starters = m.players.filter((p) => !p.is_libero).slice(0, 6);
   const libero = m.players.find((p) => p.is_libero);
 
-  const gridW = isStory ? 960 : 900;
-  const tileGap = isStory ? 24 : 18;
+  const gridW = isStory ? 960 : 780;
+  const tileGap = isStory ? 24 : 14;
   const tileSize = Math.floor((gridW - tileGap * 2) / 3);
-  const liberoSize = isStory ? Math.round(tileSize * 1.05) : Math.round(tileSize * 0.88);
+  const liberoSize = isStory ? Math.round(tileSize * 1.05) : 0;
 
   const ownIsHome = (m.match_team_home || "")
     .toLowerCase()
@@ -339,9 +321,9 @@ function LineupPreview({ targetW, targetH, maxPreviewW, m }) {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          paddingTop: (isStory ? 80 : 32) * s,
-          paddingBottom: ((isStory ? 60 : 24) + sponsorBarH) * s,
-          gap: (isStory ? 32 : 18) * s,
+          paddingTop: (isStory ? 80 : 28) * s,
+          paddingBottom: ((isStory ? 60 : 20) + sponsorBarH) * s,
+          gap: (isStory ? 32 : 14) * s,
           zIndex: 2,
         }}
       >
@@ -451,12 +433,58 @@ function LineupPreview({ targetW, targetH, maxPreviewW, m }) {
               <PlayerTilePreview s={s} team={team} player={libero} width={liberoSize} />
             </div>
           ) : (
-            <div style={{ display: "flex", alignItems: "center", gap: 16 * s }}>
-              <span style={{ fontFamily: "Oswald, sans-serif", fontSize: 22 * s, fontWeight: 700, color: "rgba(255,255,255,0.8)", textTransform: "uppercase", letterSpacing: 4 }}>
+            // Post: kompaktowy chip pozioma (pełny tile nie mieści się w 1080)
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12 * s,
+                background: "rgba(255,255,255,0.06)",
+                border: `${2 * s}px solid ${cTeam}`,
+                borderRadius: 12 * s,
+                padding: `${10 * s}px ${20 * s}px`,
+                fontFamily: "Oswald, sans-serif",
+              }}
+            >
+              <span
+                style={{
+                  background: "#ffd700",
+                  color: "#0d1117",
+                  fontSize: 14 * s,
+                  fontWeight: 800,
+                  padding: `${3 * s}px ${10 * s}px`,
+                  borderRadius: 6 * s,
+                  letterSpacing: 2,
+                  textTransform: "uppercase",
+                }}
+              >
                 LIBERO
               </span>
-              <div style={{ width: 2 * s, height: 40 * s, background: "rgba(255,255,255,0.2)" }} />
-              <PlayerTilePreview s={s} team={team} player={libero} width={liberoSize} />
+              {libero.number && (
+                <span
+                  style={{
+                    background: cTeam,
+                    color: "#0d1117",
+                    fontSize: 20 * s,
+                    fontWeight: 800,
+                    padding: `${3 * s}px ${12 * s}px`,
+                    borderRadius: 8 * s,
+                  }}
+                >
+                  #{libero.number}
+                </span>
+              )}
+              <span
+                style={{
+                  fontSize: 26 * s,
+                  fontWeight: 800,
+                  color: "#fff",
+                  textTransform: "uppercase",
+                  letterSpacing: 1,
+                }}
+              >
+                {(libero.name || '').toUpperCase()}
+              </span>
             </div>
           )
         ) : null}
@@ -481,16 +509,12 @@ function LineupPreview({ targetW, targetH, maxPreviewW, m }) {
               {[m.match_data, m.match_godzina, m.match_miejsce].filter(Boolean).join(" · ")}
             </span>
           )}
-        </div>
-
-        {/* Hashtag */}
-        {m.liga_hashtag && (
-          <div style={{ position: "absolute", bottom: (sponsorBarH + 8) * s, left: 0, right: 0, textAlign: "center" }}>
-            <span style={{ color: "rgba(255,255,255,0.55)", fontFamily: "Oswald, sans-serif", fontSize: 16 * s, fontWeight: 500, letterSpacing: 1.5 }}>
+          {m.liga_hashtag && (
+            <span style={{ fontFamily: "Oswald, sans-serif", fontSize: (isStory ? 20 : 16) * s, fontWeight: 500, color: "rgba(255,255,255,0.55)", letterSpacing: (isStory ? 2 : 1.5), marginTop: (isStory ? 6 : 4) * s }}>
               {m.liga_hashtag.startsWith("#") ? m.liga_hashtag : `#${m.liga_hashtag}`}
             </span>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Sponsors */}
         {m.sponsorzy.length > 0 && (
