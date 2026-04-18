@@ -862,6 +862,10 @@ export default function MvpEditor() {
   // Trener może odznaczyć przez toggle w UI.
   const [selectedSponsors, setSelectedSponsors] = useState(urlData.sponsorzy);
 
+  // Styl grafiki (tylko dla wariantu ze zdjęciem)
+  // classic = foto jako tło full-screen; split_panel = panel po lewej/dole, foto po drugiej stronie
+  const [graphicStyle, setGraphicStyle] = useState("classic");
+
   // Photos + crop state per panel
   const [postImage, setPostImage] = useState(null);
   const [postImageNat, setPostImageNat] = useState({ w: 0, h: 0 });
@@ -943,6 +947,7 @@ export default function MvpEditor() {
               postImageNat.h
             ),
             photo_zoom: `${postZoom}%`,
+            style: graphicStyle,
           }
         : null,
       story: storyImage
@@ -958,6 +963,7 @@ export default function MvpEditor() {
               storyImageNat.h
             ),
             photo_zoom: `${storyZoom}%`,
+            style: graphicStyle,
           }
         : null,
       with_photo: !!hasAnyPhoto,
@@ -1153,6 +1159,59 @@ export default function MvpEditor() {
           />
         </div>
       </div>
+
+      {/* Styl grafiki — tylko gdy jest zdjęcie */}
+      {(postImage || storyImage) && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            marginTop: 12,
+            padding: "10px 14px",
+            background: "rgba(0,0,0,0.04)",
+            borderRadius: 12,
+          }}
+        >
+          <span
+            style={{
+              fontSize: 11,
+              color: "var(--color-text-secondary, #888)",
+              fontWeight: 600,
+              textTransform: "uppercase",
+              letterSpacing: 1,
+            }}
+          >
+            Styl grafiki:
+          </span>
+          {[
+            { id: "classic", label: "Klasyczny" },
+            { id: "split_panel", label: "Split Panel" },
+          ].map((s) => (
+            <button
+              key={s.id}
+              onClick={() => setGraphicStyle(s.id)}
+              style={{
+                padding: "6px 14px",
+                borderRadius: 8,
+                border:
+                  graphicStyle === s.id
+                    ? "2px solid #ffd700"
+                    : "2px solid rgba(0,0,0,0.1)",
+                background:
+                  graphicStyle === s.id ? "rgba(255,215,0,0.15)" : "transparent",
+                color: "var(--color-text-primary, #222)",
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: "pointer",
+                transition: "all 0.15s",
+              }}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Sponsors selector */}
       {urlData.sponsorzy.length > 0 && (
