@@ -743,6 +743,77 @@ function PreviewPanel({
   );
 }
 
+// ── SPONSORS SELECTOR ────────────────────────────────────────────────────────
+function SponsorsSelector({ sponsorzy, selected, setSelected }) {
+  if (!sponsorzy || sponsorzy.length === 0) return null;
+  const toggle = (url) =>
+    setSelected((prev) =>
+      prev.includes(url) ? prev.filter((u) => u !== url) : [...prev, url]
+    );
+  return (
+    <div
+      style={{
+        background: "rgba(0,0,0,0.15)",
+        borderRadius: 10,
+        padding: "10px 14px",
+      }}
+    >
+      <p
+        style={{
+          fontSize: 11,
+          color: "var(--color-text-secondary, #888)",
+          marginBottom: 8,
+          fontWeight: 600,
+          textTransform: "uppercase",
+          letterSpacing: 1,
+        }}
+      >
+        Sponsorzy na grafice
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {sponsorzy.map((url, i) => {
+          const isSelected = selected.includes(url);
+          return (
+            <div
+              key={i}
+              onClick={() => toggle(url)}
+              style={{
+                border: isSelected
+                  ? "2px solid #2563eb"
+                  : "2px solid rgba(255,255,255,0.15)",
+                borderRadius: 8,
+                padding: "6px 10px",
+                cursor: "pointer",
+                background: isSelected
+                  ? "rgba(37,99,235,0.15)"
+                  : "rgba(255,255,255,0.05)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                minWidth: 80,
+                height: 44,
+                transition: "all 0.15s",
+              }}
+            >
+              <img
+                src={url}
+                alt={`Sponsor ${i + 1}`}
+                style={{ height: 28, maxWidth: 100, objectFit: "contain" }}
+              />
+            </div>
+          );
+        })}
+      </div>
+      {selected.length > 0 && (
+        <p style={{ fontSize: 10, color: "#2563eb", marginTop: 6 }}>
+          {selected.length} sponsor{selected.length > 1 ? "ów" : ""} wybrany
+          {selected.length > 1 ? "ch" : ""}
+        </p>
+      )}
+    </div>
+  );
+}
+
 // ── PLAYER FIELD (editable input z labelem) ──────────────────────────────────
 function PlayerField({ label, value, onChange, placeholder, width }) {
   return (
@@ -787,6 +858,10 @@ export default function MvpEditor() {
   const [playerNumber, setPlayerNumber] = useState(urlData.player_number);
   const [playerPosition, setPlayerPosition] = useState(urlData.player_position);
 
+  // Sponsors — seed all from URL jako "selected" (domyślnie wszyscy aktywni).
+  // Trener może odznaczyć przez toggle w UI.
+  const [selectedSponsors, setSelectedSponsors] = useState(urlData.sponsorzy);
+
   // Photos + crop state per panel
   const [postImage, setPostImage] = useState(null);
   const [postImageNat, setPostImageNat] = useState({ w: 0, h: 0 });
@@ -813,6 +888,7 @@ export default function MvpEditor() {
     player_name: playerName.trim() || urlData.player_name,
     player_number: playerNumber.trim(),
     player_position: playerPosition.trim(),
+    sponsorzy: selectedSponsors,
   };
 
   const generateGraphics = async () => {
@@ -853,7 +929,7 @@ export default function MvpEditor() {
         team_away: urlData.match_team_away,
         score: urlData.match_score,
       },
-      sponsorzy: urlData.sponsorzy,
+      sponsorzy: selectedSponsors,
       post: postImage
         ? {
             photo_base64: postImage,
@@ -1077,6 +1153,23 @@ export default function MvpEditor() {
           />
         </div>
       </div>
+
+      {/* Sponsors selector */}
+      {urlData.sponsorzy.length > 0 && (
+        <div
+          style={{
+            width: "100%",
+            maxWidth: 600,
+            marginTop: 12,
+          }}
+        >
+          <SponsorsSelector
+            sponsorzy={urlData.sponsorzy}
+            selected={selectedSponsors}
+            setSelected={setSelectedSponsors}
+          />
+        </div>
+      )}
 
       {/* Generate button */}
       <button
